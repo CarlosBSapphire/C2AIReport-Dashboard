@@ -10,6 +10,7 @@
     <body>
         <header>
             <h1>Welcome to the Dashboard</h1>
+            <!--TODO: add logo and potentially nav-->
         </header>
 
         <main>
@@ -50,40 +51,32 @@
 
                 <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="tabpanel">
                     <h2>Daily Costs Overview</h2>
+                    <!-- TODO: add form for info pull in -->
                     <div class="costs-grid">
                         <div class="cost-card">
-                            <h3>Daily Calls Cost</h3>
-                            <!-- Placeholder for calls cost chart -->
+                            <!--TODO: make stacked bar chart for each catagory w/line chart for cost and tooltip to show full details -->
                             <div class="chart-placeholder" aria-label="Daily calls cost chart"></div>
                         </div>
-                        <div class="cost-card">
-                            <h3>Daily Email Cost</h3>
-                            <!-- Placeholder for email cost chart -->
-                            <div class="chart-placeholder" aria-label="Daily email cost chart"></div>
-                        </div>
-                        <div class="cost-card">
-                            <h3>Daily Chat Cost</h3>
-                            <!-- Placeholder for chat cost chart -->
-                            <div class="chart-placeholder" aria-label="Daily chat cost chart"></div>
-                        </div>
+                        
                     </div>
                 </div>
 
                 <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="tabpanel" hidden>
                     <h2>Invoices Pending</h2>
+                    <!-- TODO: add form for info pull in -->
                     <div class="invoice-summary">
                         <div class="metric-cards">
                             <div class="metric-card">
                                 <h3>Pending Amount</h3>
-                                <div class="metric-value">$0.00</div>
+                                <div class="metric-value"><!--TODO: make this dynamic --></div>
                             </div>
                             <div class="metric-card">
                                 <h3>Monthly Collection</h3>
-                                <div class="metric-value">$0.00</div>
+                                <div class="metric-value"><!--TODO: make this dynamic --></div>
                             </div>
                             <div class="metric-card">
                                 <h3>Yearly Collection</h3>
-                                <div class="metric-value">$0.00</div>
+                                <div class="metric-value"><!--TODO: make this dynamic --></div>
                             </div>
                         </div>
                         <!-- Placeholder for revenue trend chart -->
@@ -92,7 +85,7 @@
                         <div class="filter-section">
                             <label for="userFilter">Filter by User:</label>
                             <select id="userFilter">
-                                <option value="">All Users</option>
+                                <option value="">All Users</option><!--TODO: make this dynamic -->
                             </select>
                         </div>
                     </div>
@@ -100,6 +93,7 @@
 
                 <div id="panel-3" role="tabpanel" aria-labelledby="tab-3" class="tabpanel" hidden>
                     <h2>Commissions</h2>
+                    <!-- TODO: add form for info pull in -->
                     <div class="commission-dashboard">
                         <div class="metric-cards">
                             <div class="metric-card">
@@ -155,6 +149,7 @@
 
                 <div id="panel-5" role="tabpanel" aria-labelledby="tab-5" class="tabpanel" hidden>
                     <h2>AI Email Records</h2>
+                    <!-- TODO: add form for info pull in -->
                     <div class="email-analytics">
                         <div class="time-filter">
                             <button class="time-btn active" data-period="week">Week</button>
@@ -209,6 +204,7 @@
 
                 <div id="panel-7" role="tabpanel" aria-labelledby="tab-7" class="tabpanel" hidden>
                     <h2>AI Chat Data</h2>
+                    <!-- TODO: add form for info pull in -->
                     <div class="chat-analytics">
                         <div class="time-filter">
                             <button class="time-btn active" data-period="week">Week</button>
@@ -238,11 +234,12 @@
         </main>
 
         <footer>
-            <!--TODO: add some kinda legal stuff-->
+            
             <section class="contact" aria-label="Contact Form">
                 <h4>Contact Us</h4>
                 <p>If you have any questions or feedback, please reach out to us at <a><!--TODO: Get cotact information--></a>
             </section>
+            <!--TODO: add some kinda legal stuff-->
         </footer>
     </body>
 </html>
