@@ -1,15 +1,84 @@
-/* Basic tab styles */
-:root{
-	--accent:#0066cc;
-	--bg:#fff;
-	--muted:#666;
+/* =========================
+	 Default (Dark Theme)
+	 ========================= */
+:root {
+	/* Backgrounds */
+	--bg: #141421;
+	/* panel gradient background */
+	--bg-plugin-gradient: linear-gradient(to bottom, #1a1a2e, #141421);
+	/* panels / cards */
+	--bg-c2ai-border-gradient: linear-gradient(to bottom right, #008387, 70%, #00124a);
+	/* c2ai border; requires a ::before and absolute postioning with a zindex of -1 at 0 top, left, bottom, right and content:'';  */
+	--panel-shadow: 0rem 0.2rem 0.2rem rgba(0, 0, 0, 0.07);
+	--modal-footer-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
+	--modal-header-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
+
+	/* Text */
+	--text: #ffffff;
+	/* primary text */
+	--text-muted: #9ca3af;
+	/* secondary text */
+	--text-placeholders: #545a82;
+	/* input hints, placeholders */
+	--pending-text: #ffb70b;
+	/* warning text */
+	--menu-text: #ffffff;
+	/* menu text */
+
+	/* Borders / Dividers */
+	--border: #141421;
+
+	/* Primary Accent */
+	--primary: #00356f;
+	/* main CTA (blue button) */
+
+	/* Secondary Accent */
+	--secondary: #008387;
+	/* main CTA (blue button) */
+
+	/* Nav Button Highlights */
+	--nav-active-background: #0a1330;
+	/* active nav item highlight main */
+	--nav-active-left-trim: #0467d2;
+	/* active nav item highlight left border trim */
+
+	/* Status Colors */
+	--success: #008387;
+	/* success */
+	--failed: #dc3545;
+	/* failed */
+	--info: #3b82f6;
+	/* links / highlights */
+	--active: #00356f;
+	/* active elements */
+	--inactive: #2e3045;
+	/* inactive elements */
+	--pending: #008387;
+	/* pending */
+
+	/* Buttons & Inputs */
+	--primary-btn-bg: #00356f;
+	--primary-btn-onhover: #008387;
+	--secondary-btn-bg: #0a1330;
+	--secondary-btn-onhover-border: #0467d2;
+	--input-bg: #2e3045;
+	--input-active-bg: #0a1330;
+	--input-active-border: #0467d2;
+	--active-box-shadow: 0 0 0 0.2rem #0467d280;
+	--dropdown-item-hover: #545a82;
 }
+
+
+/* TODO: Light theme variables */
+
+/* Basic tab styles (uses theme variables) */
+
 body{
-	font-family:Segoe UI, Roboto, Arial, sans-serif;
-	margin:0;
-	padding:16px;
-	background:#f6f7fb;
-	color:#111;
+		font-family:Segoe UI, Roboto, Arial, sans-serif;
+		margin:0;
+		padding:16px;
+		background:var(--bg);
+		color:var(--text);
 }
 .tablist{
 	display:flex;
@@ -18,6 +87,7 @@ body{
 }
 .tab{
 	background:transparent;
+    color:var(--text);
 	border:1px solid #ddd;
 	padding:8px 12px;
 	border-radius:6px;
@@ -25,9 +95,9 @@ body{
 	font-weight:600;
 }
 .tab[aria-selected="true"]{
-	background:var(--accent);
-	color:#fff;
-	border-color:var(--accent);
+	background:var(--primary);
+	color:var(--text);
+	border-color:var(--primary);
 }
 .tab:focus{
 	outline:3px solid rgba(0,102,204,0.18);
@@ -35,10 +105,10 @@ body{
 }
 .tabpanel{
 	background:var(--bg);
-	border:1px solid #e6e9f0;
+	border:1px solid var(--border);
 	padding:16px;
 	border-radius:6px;
-	box-shadow:0 1px 2px rgba(16,24,40,0.04);
+	box-shadow:var(--panel-shadow);
 }
 /* end spacing rules */
 
