@@ -61,9 +61,9 @@
 
                 <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="tabpanel" hidden>
                     <h2>Invoices Pending</h2>
-                    <!-- TODO: add form for info pull in -->
+                    
                     <div class="invoice-summary">
-                        <div class="metric-cards">
+                        <!--<div class="metric-cards">
                             <div class="metric-card">
                                 <h3>Pending Amount</h3>
                                 <div class="metric-value"><!--TODO: make this dynamic --></div>
@@ -79,7 +79,7 @@
                         </div>
                         <div class="filter-section">
                             <label for="userFilter">Filter by User:</label>
-                            <input type="text" id="userFilter" name="userFilter" placeholder="Enter user name or ID" />
+                            <input type="text" id="userFilter" name="userFilter" placeholder="Enter company Data" />
 
                         </div>
                         <!-- Placeholder for revenue trend chart -->
@@ -121,27 +121,8 @@
                 <div id="panel-4" role="tabpanel" aria-labelledby="tab-4" class="tabpanel" hidden>
                     <h2>Manual Charges</h2>
                     <div class="package-dashboard">
-                        <div class="metric-cards">
-                            <div class="metric-card">
-                                <h3>Total Active Subscriptions</h3>
-                                <div class="metric-value">0</div>
-                            </div>
-                            <div class="metric-card">
-                                <h3>Total Monthly Revenue</h3>
-                                <div class="metric-value">$0.00</div>
-                            </div>
-                        </div>
-                        <!-- Package analytics charts -->
-                        <div class="charts-grid">
-                            <!--TODO: figure out what thisis supposed to be-->
-                            <div class="chart-card">
-                                <h3>Popular Packages</h3>
-                                <div class="chart-placeholder" aria-label="Popular packages chart"></div>
-                            </div>
-                            <div class="chart-card">
-                                <h3>Revenue by Package</h3>
-                                <div class="chart-placeholder" aria-label="Package revenue chart"></div>
-                            </div>
+                        <div>
+                            <!--Columns are user_id, quantity, frequency, cost, -->
                         </div>
                     </div>
                 </div>
@@ -157,22 +138,8 @@
                             <button class="time-btn" data-period="year">Year</button>
                         </div>
                         <!-- Email usage chart -->
-                        <div class="chart-placeholder" aria-label="Email usage chart"></div>
-                        <!-- User breakdown table -->
-                        <div class="table-container">
-                            <table class="email-table">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Email Count</th>
-                                        <th>Usage Trend</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Data rows will be populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="chart-placeholder" aria-label="AI Usage chart"></div>
+                        
                     </div>
                 </div>
 
@@ -188,10 +155,11 @@
                             <table class="users-table">
                                 <thead>
                                     <tr>
-                                        <th>User</th>
-                                        <th>Waiting Since</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
+                                        <th>Company Name</th>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Email</th>
+
                                     </tr>
                                 </thead>
                                 <tbody>
