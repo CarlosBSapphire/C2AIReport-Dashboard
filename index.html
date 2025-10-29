@@ -19,33 +19,31 @@
                 <div role="tablist" aria-label="Dashboard tabs" class="tablist">
                     <!--TODO: get a list of the reports needed-->
                     <button id="tab-1" role="tab" aria-selected="true" aria-controls="panel-1" tabindex="0" class="tab">
-                        Daily Costs Overview
+                        <h3>Daily Costs Overview</h3>
                         <!-- show Daily_Calls_Cost_Record,Daily_Email_Cost_Record,Daily_Chat_Record_Cost_Record: Create Similar table and charts that visualize the data in this table.-->
                     </button>
                     <button id="tab-2" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1" class="tab">
-                        Invoices Pending
+                        <h3>Invoivces Pending</h3>
                         <!--Invoices_Pending: Should Show Pending Amount, Total Amount Collected for the Month, Total Collected for the year, trend chart showing revenue increase over time.  Should also allow us to filter which user is generating us the most revenue at this time.-->
                     </button>
                     <button id="tab-3" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1" class="tab">
-                        Commissions
+                        <h3>Commissions</h3>
                         <!--Commission_Records/commission_table: This will show commissions per sales rep.  (Still Being Built Out.)  Commissions Pending Payout, etc.  This needs additional data.  Build base framework, but we will need to discuss further for full breakdown data.-->
                     </button>
                     <button id="tab-4" role="tab" aria-selected="false" aria-controls="panel-4" tabindex="-1" class="tab">
-                        Manual 
+                        <h3>Manual</h3>
                         <!--Manual_Charges: This is essentially where all packages/features customers sign up for.  This should show total Amount currently signed up for, most popular packages, least popular, and the packages generating the most revenue.-->
                     </button>
                     <button id="tab-5" role="tab" aria-selected="false" aria-controls="panel-5" tabindex="-1" class="tab">
-                        AI email records
-                        <!--AI_Email_Records: Basic Record of Emails per user which will allow break down per week, month, year. -->
+                        <h3>AI records</h3>
+                        <!--AI_Email_Records: Basic Record of Emails per user which will allow break down per week, month, year.
+                          and chat data as a stacked bar graph -->
                     </button>
                     <button id="tab-6" role="tab" aria-selected="false" aria-controls="panel-6" tabindex="-1" class="tab">
-                        Pending users
+                        <h3>Pending Users</h3>
                         <!--Pending-User-Setup: Show a chart or table of users waiting.-->
                     </button>
-                    <button id="tab-7" role="tab" aria-selected="false" aria-controls="panel-7" tabindex="-1" class="tab">
-                        AI chat data
-                        <!---AI_Email_Records: Basic Record of Emails per user which will allow break down per week, month, year..-->
-                    </button>
+                    
                     
                 </div>
 
@@ -79,15 +77,15 @@
                                 <div class="metric-value"><!--TODO: make this dynamic --></div>
                             </div>
                         </div>
+                        <div class="filter-section">
+                            <label for="userFilter">Filter by User:</label>
+                            <input type="text" id="userFilter" name="userFilter" placeholder="Enter user name or ID" />
+
+                        </div>
                         <!-- Placeholder for revenue trend chart -->
                         <div class="chart-placeholder" aria-label="Revenue trend chart"></div>
                         <!-- Placeholder for user revenue filter -->
-                        <div class="filter-section">
-                            <label for="userFilter">Filter by User:</label>
-                            <select id="userFilter">
-                                <option value="">All Users</option><!--TODO: make this dynamic -->
-                            </select>
-                        </div>
+                        
                     </div>
                 </div>
 
@@ -98,7 +96,7 @@
                         <div class="metric-cards">
                             <div class="metric-card">
                                 <h3>Pending Payouts</h3>
-                                <div class="metric-value">$0.00</div>
+                                <div class="metric-value"><!--TODO make this dynamic--></div>
                             </div>
                         </div>
                         <!-- Placeholder for sales rep commission table -->
@@ -113,7 +111,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Data rows will be populated dynamically -->
+                                    <!-- TODO: Data rows will be populated dynamically -->
                                 </tbody>
                             </table>
                         </div>
@@ -135,6 +133,7 @@
                         </div>
                         <!-- Package analytics charts -->
                         <div class="charts-grid">
+                            <!--TODO: figure out what thisis supposed to be-->
                             <div class="chart-card">
                                 <h3>Popular Packages</h3>
                                 <div class="chart-placeholder" aria-label="Popular packages chart"></div>
@@ -152,6 +151,7 @@
                     <!-- TODO: add form for info pull in -->
                     <div class="email-analytics">
                         <div class="time-filter">
+                            <button class="time-btn" data-period="day">Day</button>
                             <button class="time-btn active" data-period="week">Week</button>
                             <button class="time-btn" data-period="month">Month</button>
                             <button class="time-btn" data-period="year">Year</button>
@@ -202,34 +202,6 @@
                     </div>
                 </div>
 
-                <div id="panel-7" role="tabpanel" aria-labelledby="tab-7" class="tabpanel" hidden>
-                    <h2>AI Chat Data</h2>
-                    <!-- TODO: add form for info pull in -->
-                    <div class="chat-analytics">
-                        <div class="time-filter">
-                            <button class="time-btn active" data-period="week">Week</button>
-                            <button class="time-btn" data-period="month">Month</button>
-                            <button class="time-btn" data-period="year">Year</button>
-                        </div>
-                        <!-- Chat usage chart -->
-                        <div class="chart-placeholder" aria-label="Chat usage chart"></div>
-                        <!-- User breakdown table -->
-                        <div class="table-container">
-                            <table class="chat-table">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Chat Count</th>
-                                        <th>Usage Trend</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Data rows will be populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </section>
         </main>
 
