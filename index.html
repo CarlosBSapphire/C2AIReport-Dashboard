@@ -19,27 +19,220 @@
                     <!--TODO: get a list of the reports needed-->
                     <button id="tab-1" role="tab" aria-selected="true" aria-controls="panel-1" tabindex="0" class="tab">
                         Daily Costs Overview
+                        <!-- show Daily_Calls_Cost_Record,Daily_Email_Cost_Record,Daily_Chat_Record_Cost_Record: Create Similar table and charts that visualize the data in this table.-->
                     </button>
                     <button id="tab-2" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1" class="tab">
-                        Next Report
+                        Invoices Pending
+                        <!--Invoices_Pending: Should Show Pending Amount, Total Amount Collected for the Month, Total Collected for the year, trend chart showing revenue increase over time.  Should also allow us to filter which user is generating us the most revenue at this time.-->
                     </button>
                     <button id="tab-3" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1" class="tab">
-                        Settings?
+                        Commissions
+                        <!--Commission_Records/commission_table: This will show commissions per sales rep.  (Still Being Built Out.)  Commissions Pending Payout, etc.  This needs additional data.  Build base framework, but we will need to discuss further for full breakdown data.-->
                     </button>
-                </div>
-
-                <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="tabpanel">
-                    <h2>Daily costs</h2>
-                </div>
-
-                <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="tabpanel" hidden>
-                    <h2>Reports</h2>
+                    <button id="tab-4" role="tab" aria-selected="false" aria-controls="panel-4" tabindex="-1" class="tab">
+                        Manual 
+                        <!--Manual_Charges: This is essentially where all packages/features customers sign up for.  This should show total Amount currently signed up for, most popular packages, least popular, and the packages generating the most revenue.-->
+                    </button>
+                    <button id="tab-5" role="tab" aria-selected="false" aria-controls="panel-5" tabindex="-1" class="tab">
+                        AI email records
+                        <!--AI_Email_Records: Basic Record of Emails per user which will allow break down per week, month, year. -->
+                    </button>
+                    <button id="tab-6" role="tab" aria-selected="false" aria-controls="panel-6" tabindex="-1" class="tab">
+                        Pending users
+                        <!--Pending-User-Setup: Show a chart or table of users waiting.-->
+                    </button>
+                    <button id="tab-7" role="tab" aria-selected="false" aria-controls="panel-7" tabindex="-1" class="tab">
+                        AI chat data
+                        <!---AI_Email_Records: Basic Record of Emails per user which will allow break down per week, month, year..-->
+                    </button>
                     
                 </div>
 
+                <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="tabpanel">
+                    <h2>Daily Costs Overview</h2>
+                    <div class="costs-grid">
+                        <div class="cost-card">
+                            <h3>Daily Calls Cost</h3>
+                            <!-- Placeholder for calls cost chart -->
+                            <div class="chart-placeholder" aria-label="Daily calls cost chart"></div>
+                        </div>
+                        <div class="cost-card">
+                            <h3>Daily Email Cost</h3>
+                            <!-- Placeholder for email cost chart -->
+                            <div class="chart-placeholder" aria-label="Daily email cost chart"></div>
+                        </div>
+                        <div class="cost-card">
+                            <h3>Daily Chat Cost</h3>
+                            <!-- Placeholder for chat cost chart -->
+                            <div class="chart-placeholder" aria-label="Daily chat cost chart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="tabpanel" hidden>
+                    <h2>Invoices Pending</h2>
+                    <div class="invoice-summary">
+                        <div class="metric-cards">
+                            <div class="metric-card">
+                                <h3>Pending Amount</h3>
+                                <div class="metric-value">$0.00</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Monthly Collection</h3>
+                                <div class="metric-value">$0.00</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Yearly Collection</h3>
+                                <div class="metric-value">$0.00</div>
+                            </div>
+                        </div>
+                        <!-- Placeholder for revenue trend chart -->
+                        <div class="chart-placeholder" aria-label="Revenue trend chart"></div>
+                        <!-- Placeholder for user revenue filter -->
+                        <div class="filter-section">
+                            <label for="userFilter">Filter by User:</label>
+                            <select id="userFilter">
+                                <option value="">All Users</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="panel-3" role="tabpanel" aria-labelledby="tab-3" class="tabpanel" hidden>
-                    <h2>Settings?</h2>
-                    <p>Adjust dashboard preferences here.</p>
+                    <h2>Commissions</h2>
+                    <div class="commission-dashboard">
+                        <div class="metric-cards">
+                            <div class="metric-card">
+                                <h3>Pending Payouts</h3>
+                                <div class="metric-value">$0.00</div>
+                            </div>
+                        </div>
+                        <!-- Placeholder for sales rep commission table -->
+                        <div class="table-container">
+                            <table class="commission-table">
+                                <thead>
+                                    <tr>
+                                        <th>Sales Rep</th>
+                                        <th>Current Commission</th>
+                                        <th>YTD Commission</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-4" role="tabpanel" aria-labelledby="tab-4" class="tabpanel" hidden>
+                    <h2>Manual Charges</h2>
+                    <div class="package-dashboard">
+                        <div class="metric-cards">
+                            <div class="metric-card">
+                                <h3>Total Active Subscriptions</h3>
+                                <div class="metric-value">0</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Total Monthly Revenue</h3>
+                                <div class="metric-value">$0.00</div>
+                            </div>
+                        </div>
+                        <!-- Package analytics charts -->
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <h3>Popular Packages</h3>
+                                <div class="chart-placeholder" aria-label="Popular packages chart"></div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Revenue by Package</h3>
+                                <div class="chart-placeholder" aria-label="Package revenue chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-5" role="tabpanel" aria-labelledby="tab-5" class="tabpanel" hidden>
+                    <h2>AI Email Records</h2>
+                    <div class="email-analytics">
+                        <div class="time-filter">
+                            <button class="time-btn active" data-period="week">Week</button>
+                            <button class="time-btn" data-period="month">Month</button>
+                            <button class="time-btn" data-period="year">Year</button>
+                        </div>
+                        <!-- Email usage chart -->
+                        <div class="chart-placeholder" aria-label="Email usage chart"></div>
+                        <!-- User breakdown table -->
+                        <div class="table-container">
+                            <table class="email-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email Count</th>
+                                        <th>Usage Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-6" role="tabpanel" aria-labelledby="tab-6" class="tabpanel" hidden>
+                    <h2>Pending Users</h2>
+                    <div class="pending-users">
+                        <div class="metric-card">
+                            <h3>Total Pending</h3>
+                            <div class="metric-value">0</div>
+                        </div>
+                        <!-- Pending users table -->
+                        <div class="table-container">
+                            <table class="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Waiting Since</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-7" role="tabpanel" aria-labelledby="tab-7" class="tabpanel" hidden>
+                    <h2>AI Chat Data</h2>
+                    <div class="chat-analytics">
+                        <div class="time-filter">
+                            <button class="time-btn active" data-period="week">Week</button>
+                            <button class="time-btn" data-period="month">Month</button>
+                            <button class="time-btn" data-period="year">Year</button>
+                        </div>
+                        <!-- Chat usage chart -->
+                        <div class="chart-placeholder" aria-label="Chat usage chart"></div>
+                        <!-- User breakdown table -->
+                        <div class="table-container">
+                            <table class="chat-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Chat Count</th>
+                                        <th>Usage Trend</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
