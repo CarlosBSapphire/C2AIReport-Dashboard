@@ -1,23 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <style src="styles.css"></style>
-    <script src="app.js" defer></script>
-</head>
-<body>
-    <header>
-        <h1>Welcome to the Dashboard</h1>
-        <nav>
-            <ul>
-                <li><a href="#reports">Reports</a></li>
-                <li><a href="#analytics">Analytics</a></li>
-                <li><a href="#settings">Settings</a></li>
-            </ul>
-    </header>
-</body>
-<footer>
-    
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dashboard</title>
+        <link rel="stylesheet" href="styles.css" />
+        <script src="app.js" defer></script>
+    </head>
+    <body>
+        <header>
+            <h1>Welcome to the Dashboard</h1>
+        </header>
+
+        <main>
+            <!-- Tabs component -->
+            <section class="tabs" aria-label="Main tabs">
+                <div role="tablist" aria-label="Dashboard tabs" class="tablist">
+                    <button id="tab-1" role="tab" aria-selected="true" aria-controls="panel-1" tabindex="0" class="tab">
+                        Overview
+                    </button>
+                    <button id="tab-2" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1" class="tab">
+                        Reports
+                    </button>
+                    <button id="tab-3" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1" class="tab">
+                        Settings
+                    </button>
+                </div>
+
+                <div id="panel-1" role="tabpanel" aria-labelledby="tab-1" class="tabpanel">
+                    <h2>Overview</h2>
+                    <p>Quick summary and KPIs go here.</p>
+                </div>
+
+                <div id="panel-2" role="tabpanel" aria-labelledby="tab-2" class="tabpanel" hidden>
+                    <h2>Reports</h2>
+                    <p>Cost by day and other reports appear here.</p>
+                </div>
+
+                <div id="panel-3" role="tabpanel" aria-labelledby="tab-3" class="tabpanel" hidden>
+                    <h2>Settings</h2>
+                    <p>Adjust dashboard preferences here.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <!--TODO: add some kinda legal stuff-->
+        </footer>
+    </body>
 </html>
