@@ -10,6 +10,13 @@
     <body>
         <div class="clients"> <!--TODO: make these into tabs-->
             <h1>Users</h1>
+            <div id="userform">
+                <label for="start-date"></label>
+                <input type="date" id="start-date" name="start-date"> <!--TODO add a default value for the most recent Sunday-->
+                <label for="end-date"></label>
+                <input type="date" id="end-date" name="end-date"><!-- TODO: make default value for today-->
+                <button id="load-users">Load Users</button>
+            </div>
             <div id="user-list"></div>
             <div id="client-indiviual-table"></div>
         </div>
@@ -23,3 +30,14 @@
     </footer>
     <script src="app.js"></script>
 </html>
+
+<!-- Alex's weekend notes:
+    add trello notes into cl
+    add csv of database into cl
+    add this github to thcl
+    add to laptop todotree and anchor
+    buiildout the postman flow
+    figure out how to add the postman flow to the repo
+    potentially: create github action for contributions
+    remember that the packages is stored in the 'manual_charges' table
+    -->

@@ -86,29 +86,67 @@ window.onload = function() {
 		//ANCHOR: Row add ins 
 		const tbody = document.getElementById("user-list-tbody");
 		if (tbody) {
-			tbody.querySelectorAll("tr").forEach((tr) => {
-				//Get user ID from first column
-				const userId = tr.firstChild ? tr.firstChild.textContent : null;
-				console.log("User ID for this row:", userId);
-				//Pull packages
-				packagesData = fetchPackages(userId);
-				packages=[];
-				
+    tbody.querySelectorAll("tr").forEach(async (tr) => {
+        const userId = tr.firstChild ? tr.firstChild.textContent : null;
+        console.log("User ID for this row:", userId);
+        
+        try {
+            // Wait for the fetch to complete
+            const response = await fetch("https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "table_name": "manual_charges",
+                    "columns": ["user_id", "frequency", "cost", "name"],
+                    "filters": { "user_id": userId }
+                })
+            });
 
-				//TODO: Pull money made
-				moneyMade = 0;
-				//TODO: Insert data into new columns
-				//ANCHOR make each row clickable to open user detail view
-				tr.addEventListener("click", () => {
-					const userId = tr.firstChild ? tr.firstChild.textContent : null;
-					if (userId) {
-						// TODO: Open user detail view - replace with actual logic
-						console.log("Row clicked, open detail for user ID:", userId);
-						pullClientTable(userId);
-					}
-				});
-			});
-		}
+            // Create packages cell first (we'll populate it based on the response)
+            const packagesTd = document.createElement("td");
+            packagesTd.textContent = "No packages";  // Default text
+            tr.appendChild(packagesTd);
+
+            try {
+                const text = await response.text();
+                if (text && text.trim() !== '') {
+                    const data = JSON.parse(text);
+                    const packages = Array.isArray(data) ? data : 
+                                   data.rows || data.data || data.result || [];
+                    
+                    if (packages.length > 0) {
+                        const packageStrings = packages.map(pkg => 
+                            `${pkg.name} (${pkg.frequency}): $${pkg.cost}`
+                        );
+                        packagesTd.textContent = packageStrings.join("; ");
+                    }
+                }
+            } catch (error) {
+                console.log("Could not load packages for user", userId, ":", error.message);
+                // We don't need to do anything else since we already set "No packages" as default
+            }
+
+            // TODO: Add money made cell
+            const moneyTd = document.createElement("td");
+            moneyTd.textContent = "$0.00"; //NOTE - placeholder until calculation is implemented
+			calculateMoneyMade(userId);
+            tr.appendChild(moneyTd);
+
+        } catch (error) {
+            console.error("Error processing packages for user", userId, ":", error.message);
+            // Add empty cells if there's an error
+            const errorTd = document.createElement("td");
+            errorTd.textContent = "Error loading packages";
+            tr.appendChild(errorTd);
+            
+            const moneyTd = document.createElement("td");
+            moneyTd.textContent = "N/A";
+            tr.appendChild(moneyTd);
+        }
+    });
+}
 	})
 	.catch((error) => console.error(error));
 	console.log("Fetch request sent.");
@@ -129,7 +167,7 @@ function createTable(data, tableId) {
 
 	const table = document.createElement("table");
 	table.className = "data-table";
-	// Allow CSS hooks if desired
+	// NOTE: Allow CSS hooks?
 
 	const thead = document.createElement("thead");
 	const tbody = document.createElement("tbody");
@@ -239,6 +277,7 @@ function populateRows(tableId, rows) {
 				const td = document.createElement('td');
 				td.textContent = row === null || row === undefined ? '' : String(row);
 				tr.appendChild(td);
+				
 			}
 		}
 
@@ -300,11 +339,10 @@ function fetchDailyEmailCosts(userId) {
 }
 
 function fetchPackages(userId) {
-	console.log("Fetching packages for user ID:", userId);
 	const myHeaders = new Headers();
-	myHeaders.append("Content-Type", "application/json");
+myHeaders.append("Content-Type", "application/json");
 
-	const raw = JSON.stringify({
+const raw = JSON.stringify({
 	"table_name": "manual_charges",
 	"columns": [
 		"user_id",
@@ -328,7 +366,20 @@ function fetchPackages(userId) {
 	.then((response) => response.text())
 	.then((result) => console.log(result))
 	.catch((error) => console.error(error));
-	console.log(raw);
-	console.log("Fetch request for packages sent.");
-	return raw;
+}
+
+function calculateMoneyMade(userId) {
+	res=0;
+	//Add packages
+	packageData = fetchPackages(userId);
+	for (let pkg of packageData) {
+		if (pkg.frequency === "weekly") {
+			res+= pkg.cost; //NOTE - until I figure out weekly monthly bs
+		}
+	}
+
+	//add daily email costs
+	dailyEmailData = fetchDailyEmailCosts(userId);
+	// Daily emails have a new enrty for each week. 
+	
 }
