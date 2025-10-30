@@ -1,8 +1,8 @@
-/*Startup Pull request*/
+/*ANCHOR Startup Pull request*/
 window.onload = function() {
 	console.log("App.js loaded and running.");
 
-	/*Fetch User List */
+	/*ANCHOR etch User List */
 	const myHeaders = new Headers();
 	myHeaders.append("Content-Type", "application/json");
 
@@ -35,10 +35,27 @@ window.onload = function() {
 	})
 	.then((result) => {
 		console.log("Fetch result:", result);
-		// Create headers immediately from the original request
+		// ANCHOR Create headers immediately from the original request
 		createTable(raw, "user-list");
 
-		// If the webhook returned rows (array or object with rows/data), populate them
+		//ANCHOR Add other data columns to header
+		const table = document.getElementById("user-list").querySelector("table");
+		if (table) {
+			const thead = table.querySelector("thead");
+			if (thead) {
+				const headerRow = thead.querySelector("tr");
+				if (headerRow) {
+					["Packages", "Money we made"].forEach((headerText) => {
+						const th = document.createElement("th");
+						th.textContent = headerText;
+						headerRow.appendChild(th);
+					});
+				}
+			}
+		}
+			
+
+		// ANCHOR If the webhook returned rows (array or object with rows/data), populate them
 		try {
 			let rows = null;
 			if (Array.isArray(result)) rows = result;
@@ -65,11 +82,23 @@ window.onload = function() {
 			console.error("Error processing fetch result:", err);
 		
 		}
-		
-		//make each row clickable to open user detail view
+
+		//ANCHOR: Row add ins 
 		const tbody = document.getElementById("user-list-tbody");
 		if (tbody) {
 			tbody.querySelectorAll("tr").forEach((tr) => {
+				//Get user ID from first column
+				const userId = tr.firstChild ? tr.firstChild.textContent : null;
+				console.log("User ID for this row:", userId);
+				//Pull packages
+				packagesData = fetchPackages(userId);
+				packages=[];
+				
+
+				//TODO: Pull money made
+				moneyMade = 0;
+				//TODO: Insert data into new columns
+				//ANCHOR make each row clickable to open user detail view
 				tr.addEventListener("click", () => {
 					const userId = tr.firstChild ? tr.firstChild.textContent : null;
 					if (userId) {
@@ -86,7 +115,7 @@ window.onload = function() {
 	
 }
 
-/* Create Table */
+/* ANCHOR Create Table */
 function createTable(data, tableId) {
 	console.log("Creating Table",tableId);
 	console.log("Data:",data);
@@ -220,6 +249,86 @@ function populateRows(tableId, rows) {
 /* Pull for individual table */
 function pullClientTable(userId) {
 	/*TODO: pull requests for all the data*/
-	createTable(raw,'client-indiviual-table');
+	console.log("Pulling data for user ID:", userId);
+	/*TODO: fetch the daily email costs */
+	dailyEmailCosts = fetchDailyEmailCosts(userId);
 
+
+	/*TODO: Create the table*/
+
+	/*createTable(raw,'client-indiviual-table');*/
+
+}
+
+function fetchDailyEmailCosts(userId) {
+	const myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/json");
+
+	const raw = JSON.stringify({
+		"table_name": "Daily_Email_Cost_Record",
+		"columns": [
+			"user_id",
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+			"Week_Cost",
+			"Total_Emails"
+		],
+		"filters": {
+			"user_id": userId
+		}
+		});
+
+	const requestOptions = {
+		method: "POST",
+		headers: myHeaders,
+		body: raw,
+		redirect: "follow"
+		};
+
+	fetch("https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb", requestOptions)
+		.then((response) => response.text())
+		.then((result) => console.log(result))
+		.catch((error) => console.error(error));
+	console.log("Fetch request  for Daily Email costs sent.");
+	console.log(raw);
+	return raw;
+}
+
+function fetchPackages(userId) {
+	console.log("Fetching packages for user ID:", userId);
+	const myHeaders = new Headers();
+	myHeaders.append("Content-Type", "application/json");
+
+	const raw = JSON.stringify({
+	"table_name": "manual_charges",
+	"columns": [
+		"user_id",
+		"frequency",
+		"cost",
+		"name"
+	],
+	"filters": {
+		"user_id": userId
+	}
+	});
+
+	const requestOptions = {
+	method: "POST",
+	headers: myHeaders,
+	body: raw,
+	redirect: "follow"
+	};
+
+	fetch("https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb", requestOptions)
+	.then((response) => response.text())
+	.then((result) => console.log(result))
+	.catch((error) => console.error(error));
+	console.log(raw);
+	console.log("Fetch request for packages sent.");
+	return raw;
 }
