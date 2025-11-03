@@ -10,8 +10,9 @@
         <script  type="module" src="app.js"></script>
     </head>
     <body>
-        <div class="clients"> <!--TODO: make these into tabs-->
-            <h1>Users</h1>
+        <div class="clients"> <!--SECTION: Clients-->
+            <!--TODO: make these into tabs-->
+            <h1>Clients</h1>
             <div id="userform">
                 <label for="start-date"></label>
                 <input type="date" id="start-date" name="start-date"> <!--TODO add a default value for the most recent Sunday-->
@@ -20,7 +21,7 @@
                 <button id="load-users">Load Users</button>
             </div>
             <div class="card">
-                <div class="table-container">
+                <div class="table-container"> <!-- ANCHOR: main table-->
                     <table id="users-table">
                         <thead>
                             <tr>
@@ -41,68 +42,74 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            <!-- User Detail View (Initially hidden) -->
-        <div id="user-detail-view" >
-            <button id="back-button" >
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to Client List
-            </button>
-            
-            <header class="pb-4 border-b">
-                <h2 id="user-detail-title" >Revenue Breakdown: Client Name</h2>
-                <p id="user-detail-subtitle" >User ID:</p>
-            </header>
-            
-            <!-- Stats Grid -->
-            <div id="stats-grid" >
-                <!-- Stat Card Template -->
-                <div >
-                    <p >Total Revenue</p>
-                    <p id="stat-total" >$0.00</p>
-                </div>
-                <div >
-                    <p >Packages</p>
-                    <p id="stat-packages">$0.00</p>
-                </div>
-                <div >
-                    <p >Emails</p>
-                    <p id="stat-emails" >$0.00</p>
-                </div>
-                <div >
-                    <p >Chats</p>
-                    <p id="stat-chats" >$0.00</p>
-                </div>
-                <div >
-                    <p >Calls</p>
-                    <p id="stat-calls" >$0.00</p>
-                </div>
-                <div>
-                    <p >Invoices</p>
-                    <p id="stat-invoices" >$0.00</p>
-                </div>
+                </div> <!--!ANCHOR -->
+            <!-- SECTION: Main Visuals -->
+            <div id="main-client-chart">
+                
             </div>
+            <!-- SECTION: User Detail View (Initially hidden) -->
+            <div id="user-detail-view" >
+                <button id="back-button" >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Client List
+                </button>
+                
+                <header class="pb-4 border-b">
+                    <h2 id="user-detail-title" >Revenue Breakdown: Client Name</h2>
+                    <p id="user-detail-subtitle" >User ID:</p>
+                </header>
+                
+                <!-- Stats Grid -->
+                <div id="stats-grid" >
+                    <!-- Stat Card Template -->
+                    <div >
+                        <p >Total Revenue</p>
+                        <p id="stat-total" >$0.00</p>
+                    </div>
+                    <div >
+                        <p >Packages</p>
+                        <p id="stat-packages">$0.00</p>
+                    </div>
+                    <div >
+                        <p >Emails</p>
+                        <p id="stat-emails" >$0.00</p>
+                    </div>
+                    <div >
+                        <p >Chats</p>
+                        <p id="stat-chats" >$0.00</p>
+                    </div>
+                    <div >
+                        <p >Calls</p>
+                        <p id="stat-calls" >$0.00</p>
+                    </div>
+                    <div>
+                        <p >Invoices</p>
+                        <p id="stat-invoices" >$0.00</p>
+                    </div>
+                </div>
 
-            <!-- Revenue Chart -->
-            <div  >
-                <h3 >Weekly Revenue Breakdown (Gross)</h3>
-                <div class="chart-container">
-                    <canvas id="revenue-chart"></canvas>
+                <!-- Revenue Chart -->
+                <div  >
+                    <h3 >Weekly Revenue Breakdown (Gross)</h3>
+                    <div class="chart-container">
+                        <canvas id="revenue-chart"></canvas>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Packages Card -->
-            <div id="packages-card" >
-                <h3 >Active Manual Packages</h3>
-                <div id="packages-grid" c>
-                    <!-- Package items will be dynamically inserted here -->
+                <!-- Packages Card -->
+                <div id="packages-card" >
+                    <h3 >Active Manual Packages</h3>
+                    <div id="packages-grid" c>
+                        <!-- Package items will be dynamically inserted here -->
+                    </div>
                 </div>
+            </div> <!--!SECTION -->
+            
+            </div> <!--!SECTION -->
+            <div class="commisions"> <!--TODO: Make this a Tab-->
+                <h1>Commisions</h1>
+                <!--TODO: Add Commisions Table-->
             </div>
-        </div>
-        </div>
-        <div class="commisions"> <!--TODO: Make this a Tab-->
-            <h1>Commisions</h1>
-            <!--TODO: Add Commisions Table-->
         </div>
     </body>
     <footer>

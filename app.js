@@ -324,6 +324,35 @@ async function showUserDetail(user) {
 
 
 // // SECTION: Intitialize
+//TODO - Set dates and add listeners if they change:
+//SECTION - end date
+document.addEventListener('DOMContentLoaded', (event) => {
+       const dateInput = document.getElementById('end-date');
+       const today = new Date();
+
+       // Format the date as YYYY-MM-DD for the input type="date"
+       const year = today.getFullYear();
+       const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+       const day = String(today.getDate()).padStart(2, '0');
+
+       const formattedDate = `${year}-${month}-${day}`;
+       dateInput.value = formattedDate;
+   }); //!SECTION
+//SECTION - Start Date
+document.addEventListener('DOMContentLoaded', (event) => {
+       const dateInput = document.getElementById('start-date');
+       const today = new Date();
+       const lastweek = new Date(today);
+       lastweek.setDate(today.getDate()-7);
+
+       // Format the date as YYYY-MM-DD for the input type="date"
+       const year = lastweek.getFullYear();
+       const month = String(lastweek.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+       const day = String(lastweek.getDate()).padStart(2, '0');
+
+       const formattedDate = `${year}-${month}-${day}`;
+       dateInput.value = formattedDate;
+   });//!SECTION
 loadUsers();
 // //!SECTION
 
