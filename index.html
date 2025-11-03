@@ -4,24 +4,41 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <!-- <title>Dashboard</title>
-        <link rel="stylesheet" href="styles.css"> -->
+        <title>Dashboard</title>
+        <link rel="stylesheet" href="styles.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script  type="module" src="app.js"></script>
+        <script type="module" src="app.js"></script>
     </head>
     <body>
-        <div class="clients"> <!--SECTION: Clients-->
-            <!--TODO: make these into tabs-->
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button id="clients-tab" class="tab-button active">Clients</button>
+            <button id="commissions-tab" class="tab-button">Commissions</button>
+        </div>
+
+        <!-- Clients Tab Content -->
+        <div id="clients-content" class="tab-content">
             <h1>Clients</h1>
-            <div id="userform"> <!--SECTION: User Form-->
-                <label for="start-date"></label>
-                <input type="date" id="start-date" name="start-date"> <!--TODO add a default value for the most recent Sunday-->
-                <label for="end-date"></label>
-                <input type="date" id="end-date" name="end-date"><!-- TODO: make default value for today-->
-                <button id="load-users">Load Users</button>
-            </div> <!--!SECTION -->
+            
+            <!-- User Form -->
+            <div id="userform" class="form-section">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date" name="start-date">
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date" name="end-date">
+                <button id="load-users" class="btn-primary">Load Users</button>
+            </div>
+
+            <!-- Main Chart -->
+            <div id="main-client-chart" class="card">
+                <div class="chart-container">
+                    <canvas id="main-revenue-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Users Table -->
             <div class="card">
-                <div class="table-container"> <!-- ANCHOR: main table-->
+                <div class="table-container">
                     <table id="users-table">
                         <thead>
                             <tr>
@@ -29,100 +46,84 @@
                                 <th>First Name</th>
                                 <th>Last Name</th>
                                 <th>Email</th>
-                                <th>Revenue</th> <!--TODO: add revenue from and make this the auto sort column-->
-                                <th>Packages</th> <!--TODO: add packages-->
+                                <th>Revenue</th>
+                                <th>Packages</th>
                             </tr>
                         </thead>
                         <tbody id="users-tbody">
                             <tr>
-                                <td colspan="4" class="loading">
+                                <td colspan="6" class="loading">
                                     <div class="spinner"></div>
                                     <p>Loading users...</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                </div> <!--!ANCHOR -->
-            <!-- SECTION: Main Visuals -->
-            <div id="main-client-chart" class="card">
-                <div class ="chart-container">
-                    <canvas id="main-revenue-chart"></canvas>
                 </div>
-
             </div>
-            <!-- SECTION: User Detail View (Initially hidden) -->
-            <div id="user-detail-view" >                
-                <header >
-                    <h2 id="user-detail-title" >Revenue Breakdown: Client Name</h2>
-                    <p id="user-detail-subtitle" >User ID:</p>
+
+            <!-- User Detail View (Below table, initially hidden) -->
+            <div id="user-detail-view" style="display: none;">                
+                <header class="detail-header">
+                    <h2 id="user-detail-title">Revenue Breakdown: Client Name</h2>
+                    <p id="user-detail-subtitle">User ID:</p>
                 </header>
                 
                 <!-- Stats Grid -->
-                <div id="stats-grid" >
-                    <!-- Stat Card Template -->
-                    <div >
-                        <p >Total Revenue</p>
-                        <p id="stat-total" >$0.00</p>
+                <div id="stats-grid" class="stats-grid">
+                    <div class="stat-card">
+                        <p class="stat-label">Total Revenue</p>
+                        <p id="stat-total" class="stat-value">$0.00</p>
                     </div>
-                    <div >
-                        <p >Packages</p>
-                        <p id="stat-packages">$0.00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Packages</p>
+                        <p id="stat-packages" class="stat-value">$0.00</p>
                     </div>
-                    <div >
-                        <p >Emails</p>
-                        <p id="stat-emails" >$0.00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Emails</p>
+                        <p id="stat-emails" class="stat-value">$0.00</p>
                     </div>
-                    <div >
-                        <p >Chats</p>
-                        <p id="stat-chats" >$0.00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Chats</p>
+                        <p id="stat-chats" class="stat-value">$0.00</p>
                     </div>
-                    <div >
-                        <p >Calls</p>
-                        <p id="stat-calls" >$0.00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Calls</p>
+                        <p id="stat-calls" class="stat-value">$0.00</p>
                     </div>
-                    <div>
-                        <p >Invoices</p>
-                        <p id="stat-invoices" >$0.00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Invoices</p>
+                        <p id="stat-invoices" class="stat-value">$0.00</p>
                     </div>
                 </div>
 
                 <!-- Revenue Chart -->
-                <div  >
-                    <h3 >Weekly Revenue Breakdown (Gross)</h3>
+                <div class="card chart-card">
+                    <h3>Revenue Breakdown by Date</h3>
                     <div class="chart-container">
                         <canvas id="revenue-chart"></canvas>
                     </div>
                 </div>
 
                 <!-- Packages Card -->
-                <div id="packages-card" >
-                    <h3 >Active Manual Packages</h3>
-                    <div id="packages-grid" c>
+                <div id="packages-card" class="card" style="display: none;">
+                    <h3>Active Manual Packages</h3>
+                    <div id="packages-grid" class="packages-grid">
                         <!-- Package items will be dynamically inserted here -->
                     </div>
                 </div>
-            </div> <!--!SECTION -->
-            
-            </div> <!--!SECTION -->
-            <!--!SECTION -->
-            
+            </div>
         </div>
-        <!--SECTION: Commision-->
-        <div class="commisions"> <!--TODO: Make this a Tab--> 
-            <h1>Commisions</h1>
-            <!--TODO: Add Commisions Table-->
-        </div> <!--!SECTION -->
+
+        <!-- Commissions Tab Content -->
+        <div id="commissions-content" class="tab-content" style="display: none;">
+            <h1>Commissions</h1>
+            <div class="card">
+                <p>Commissions content coming soon...</p>
+            </div>
+        </div>
     </body>
     <footer>
-        
-        <!--TODO add legal stuff-->
+        <!-- TODO: add legal stuff -->
     </footer>
-   
 </html>
-
-<!-- Alex's weekend notes:
-    buiildout the postman flow
-    figure out how to add the postman flow to the repo
-    potentially: create github action for contributions
-    remember that the packages is stored in the 'manual_charges' table
-    -->
