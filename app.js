@@ -52,7 +52,6 @@ async function fetchData(tableName, columns, filters = {}, options={}) {
             'Daily_Email_Cost_Record': 'created_date',
             'Daily_Chat_Record_Cost_Record': 'created_date',
             'Daily_Calls_Cost_Record': 'created_date',
-            'Invoices_Pending': 'datecreated',
             'AI_Email_Records': 'updated_at',
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
@@ -113,12 +112,11 @@ async function getPackageStatsForUser(userId) {
 }
 
 async function getRevenueByDateForUser(userId, dates) {
-    const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts, invoices] = await Promise.all([
+    const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts] = await Promise.all([
         fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: userId }),
         fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
-        fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId }),
-        fetchData("Invoices_Pending", ["user_id", "paymentamount", "dateended"], { user_id: userId })
+        fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
     ]);
 
     const revenueByDate = {};
@@ -127,8 +125,7 @@ async function getRevenueByDateForUser(userId, dates) {
             packages: 0,
             emails: 0,
             chats: 0,
-            calls: 0,
-            invoices: 0
+            calls: 0
         };
     });
 
@@ -186,15 +183,6 @@ async function getRevenueByDateForUser(userId, dates) {
         });
     });
 
-    // Process invoices - assign to specific date
-    invoices.forEach(invoice => {
-        const amount = parseFloat(invoice.paymentamount) || 0;
-        const invoiceDate = formatDate(new Date(invoice.dateended));
-        if (revenueByDate[invoiceDate]) {
-            revenueByDate[invoiceDate].invoices += amount;
-        }
-    });
-
     return revenueByDate;
 }
 
@@ -203,7 +191,7 @@ async function getTotalRevenueForUser(userId, dates) {
     let total = 0;
     dates.forEach(date => {
         const dayRevenue = revenueByDate[date];
-        total += dayRevenue.packages + dayRevenue.emails + dayRevenue.chats + dayRevenue.calls + dayRevenue.invoices;
+        total += dayRevenue.packages + dayRevenue.emails + dayRevenue.chats + dayRevenue.calls;
     });
     return parseFloat(total.toFixed(2));
 }
@@ -221,15 +209,26 @@ async function renderMainClientChart(users, dates) {
     const revenuePromises = users.map(user => getRevenueByDateForUser(user.id, dates));
     const userRevenueByDate = await Promise.all(revenuePromises);
 
-    // Aggregate total revenue by date across all users
-    const totalRevenueByDate = dates.map(date => {
-        let dayTotal = 0;
+    // Aggregate total revenue by date and category across all users
+    const aggregatedData = dates.map(date => {
+        let packages = 0, emails = 0, chats = 0, calls = 0;
         userRevenueByDate.forEach(userRevenue => {
             const dayRevenue = userRevenue[date];
-            dayTotal += dayRevenue.packages + dayRevenue.emails + dayRevenue.chats + dayRevenue.calls + dayRevenue.invoices;
+            packages += dayRevenue.packages;
+            emails += dayRevenue.emails;
+            chats += dayRevenue.chats;
+            calls += dayRevenue.calls;
         });
-        return parseFloat(dayTotal.toFixed(2));
+        return {
+            total: parseFloat((packages + emails + chats + calls).toFixed(2)),
+            packages: parseFloat(packages.toFixed(2)),
+            emails: parseFloat(emails.toFixed(2)),
+            chats: parseFloat(chats.toFixed(2)),
+            calls: parseFloat(calls.toFixed(2))
+        };
     });
+
+    const totalRevenueByDate = aggregatedData.map(d => d.total);
 
     mainChartInstance = new Chart(ctx, {
         type: 'line',
@@ -238,13 +237,18 @@ async function renderMainClientChart(users, dates) {
             datasets: [{
                 label: 'Total Revenue',
                 data: totalRevenueByDate,
-                borderColor: 'rgba(139, 92, 246, 1)',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                borderColor: 'rgba(139, 92, 246, 1)', //TODO - fix colosrs
+                backgroundColor: 'rgba(139, 92, 246, 0.1)', //TODO - fix colosrs
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
                 pointRadius: 4,
-                pointHoverRadius: 6
+                pointHoverRadius: 6,
+                trendlineLinear:{
+                    style: "rgba(255, 0, 128, 0.8)", //TODO: fix colors
+                    lineStyle: "dotted",
+                    width: 2
+                }
             }]
         },
         options: {
@@ -284,8 +288,21 @@ async function renderMainClientChart(users, dates) {
                 },
                 tooltip: {
                     callbacks: {
+                        title: function(context) {
+                            return 'Date: ' + context[0].label;
+                        },
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            const data = aggregatedData[index];
+                            return [
+                                'Packages: $' + data.packages.toFixed(2),
+                                'Emails: $' + data.emails.toFixed(2),
+                                'Chats: $' + data.chats.toFixed(2),
+                                'Calls: $' + data.calls.toFixed(2)
+                            ];
+                        },
                         label: function(context) {
-                            return 'Total Revenue: $' + context.parsed.y.toFixed(2);
+                            return 'Total: $' + context.parsed.y.toFixed(2);
                         }
                     }
                 }
@@ -303,7 +320,7 @@ async function loadUsers() {
     try {
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
-            { is_admin: "0" }
+            { role: "user" }
         );
         console.log("Users loaded:", users);
 
@@ -388,14 +405,9 @@ async function showUserDetail(user) {
         // Get revenue by actual date
         const revenueByDate = await getRevenueByDateForUser(user.id, dates);
         
-        // Prepare data for chart by date
+        // Prepare data for chart by date (excluding packages)
         const labels = dates;
         const datasets = [
-            {
-                label: 'Packages',
-                data: labels.map(date => parseFloat(revenueByDate[date].packages.toFixed(2))),
-                backgroundColor: 'rgba(139, 92, 246, 0.8)'
-            },
             {
                 label: 'Emails',
                 data: labels.map(date => parseFloat(revenueByDate[date].emails.toFixed(2))),
@@ -410,28 +422,21 @@ async function showUserDetail(user) {
                 label: 'Calls',
                 data: labels.map(date => parseFloat(revenueByDate[date].calls.toFixed(2))),
                 backgroundColor: 'rgba(99, 102, 241, 0.8)'
-            },
-            {
-                label: 'Invoices',
-                data: labels.map(date => parseFloat(revenueByDate[date].invoices.toFixed(2))),
-                backgroundColor: 'rgba(239, 68, 68, 0.8)'
             }
         ];
 
         const totals = {
-            packages: datasets[0].data.reduce((sum, val) => sum + val, 0),
-            emails: datasets[1].data.reduce((sum, val) => sum + val, 0),
-            chats: datasets[2].data.reduce((sum, val) => sum + val, 0),
-            calls: datasets[3].data.reduce((sum, val) => sum + val, 0),
-            invoices: datasets[4].data.reduce((sum, val) => sum + val, 0)
+            packages: labels.reduce((sum, date) => sum + revenueByDate[date].packages, 0),
+            emails: datasets[0].data.reduce((sum, val) => sum + val, 0),
+            chats: datasets[1].data.reduce((sum, val) => sum + val, 0),
+            calls: datasets[2].data.reduce((sum, val) => sum + val, 0)
         };
-        totals.total = totals.packages + totals.emails + totals.chats + totals.calls + totals.invoices;
+        totals.total = totals.packages + totals.emails + totals.chats + totals.calls;
 
         document.getElementById('stat-packages').textContent = `$${totals.packages.toFixed(2)}`;
         document.getElementById('stat-emails').textContent = `$${totals.emails.toFixed(2)}`;
         document.getElementById('stat-chats').textContent = `$${totals.chats.toFixed(2)}`;
         document.getElementById('stat-calls').textContent = `$${totals.calls.toFixed(2)}`;
-        document.getElementById('stat-invoices').textContent = `$${totals.invoices.toFixed(2)}`;
         document.getElementById('stat-total').textContent = `$${totals.total.toFixed(2)}`;
 
         const ctx = document.getElementById('revenue-chart').getContext('2d');
@@ -471,15 +476,26 @@ async function showUserDetail(user) {
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            footer: function(tooltipItems) {
-                                let total = 0;
-                                tooltipItems.forEach(item => {
-                                    total += item.parsed.y;
-                                });
+                            title: function(context) {
+                                return 'Date: ' + context[0].label;
+                            },
+                            afterLabel: function(context) {
+                                const date = context.label;
+                                const dayData = revenueByDate[date];
+                                return [
+                                    'Emails: $' + dayData.emails.toFixed(2),
+                                    'Chats: $' + dayData.chats.toFixed(2),
+                                    'Calls: $' + dayData.calls.toFixed(2)
+                                ];
+                            },
+                            footer: function(context) {
+                                const date = context[0].label;
+                                const dayData = revenueByDate[date];
+                                const total = dayData.emails + dayData.chats + dayData.calls;
                                 return 'Total: $' + total.toFixed(2);
                             },
-                            label: function(context) {
-                                return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                            label: function() {
+                                return ''; // Remove individual label to avoid duplication
                             }
                         }
                     },
@@ -490,22 +506,40 @@ async function showUserDetail(user) {
             }
         });
 
-        // Display packages
+        // Display packages separately
         if (user.packages && user.packages.length > 0) {
             const packagesCard = document.getElementById('packages-card');
             const packagesGrid = document.getElementById('packages-grid');
             
-            packagesGrid.innerHTML = '';
+            // Aggregate packages by name
+            const packageAggregation = {};
             user.packages.forEach(pkg => {
+                const name = pkg.name || 'Unnamed Package';
+                if (!packageAggregation[name]) {
+                    packageAggregation[name] = {
+                        name: name,
+                        cost: 0,
+                        count: 0,
+                        frequency: pkg.frequency || 'Weekly'
+                    };
+                }
+                packageAggregation[name].cost += parseFloat(pkg.cost) || 0;
+                packageAggregation[name].count += 1;
+            });
+            
+            packagesGrid.innerHTML = '';
+            Object.values(packageAggregation).forEach(pkg => {
                 const pkgDiv = document.createElement('div');
                 pkgDiv.className = 'package-item';
                 
+                const countText = pkg.count > 1 ? ` (x${pkg.count})` : '';
+                
                 pkgDiv.innerHTML = `
                     <div class="package-header">
-                        <h4>${pkg.name}</h4>
+                        <h4>${pkg.name}${countText}</h4>
                         <span class="package-badge">${pkg.frequency}</span>
                     </div>
-                    <p class="package-cost">$${parseFloat(pkg.cost).toFixed(2)}</p>
+                    <p class="package-cost">$${pkg.cost.toFixed(2)}</p>
                 `;
                 packagesGrid.appendChild(pkgDiv);
             });
