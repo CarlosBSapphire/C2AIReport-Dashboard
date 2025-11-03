@@ -237,16 +237,13 @@ async function renderMainClientChart(users, dates) {
             datasets: [{
                 label: 'Total Revenue',
                 data: totalRevenueByDate,
-                borderColor: 'rgba(139, 92, 246, 1)', //TODO - fix colosrs
-                backgroundColor: 'rgba(139, 92, 246, 0.1)', //TODO - fix colosrs
                 borderWidth: 3,
-                fill: true,
+                //fill: true, //NOTE - do we want this filled?
                 tension: 0.4,
-                pointRadius: 4,
+                pointRadius: 2,
                 pointHoverRadius: 6,
                 trendlineLinear:{
-                    style: "rgba(255, 0, 128, 0.8)", //TODO: fix colors
-                    lineStyle: "dotted",
+                    lineStyle: "dotted", //NOTE - "dotted" | "solid" | "dashed" | "dashdot" are the options
                     width: 2
                 }
             }]
