@@ -1965,4 +1965,4 @@ function fetchCallsCostRecords(userId) {
 	.then((result) => console.log(result))
 	.catch((error) => console.error(error));
 }
->>>>>>> 04d702d28212809893f203ae6ec23ec16f2479d3
+
