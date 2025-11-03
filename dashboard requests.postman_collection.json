@@ -1,0 +1,451 @@
+{
+	"info": {
+		"_postman_id": "f53c160d-8ba5-41cd-8de9-9fc7eb1b3a9f",
+		"name": "dashboard requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49620738",
+		"_collection_link": "https://alexm-3574900e-9579094.postman.co/workspace/Alex-McVay's-Workspace~f74e145f-dc43-4efe-8fb5-72d636c34f76/collection/49620738-f53c160d-8ba5-41cd-8de9-9fc7eb1b3a9f?action=share&source=collection_link&creator=49620738"
+	},
+	"item": [
+		{
+			"name": "Users: user_id",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "  {\r\n    \"table_name\": \"users\",\r\n    \"columns\": [\r\n        \"id\",\r\n        \"first_name\",\r\n        \"last_name\"\r\n        ,\"email\"\r\n    ],\r\n    \"filters\": {\r\n      \"is_admin\": \"0\"\r\n    \r\n  }\r\n  }\r\n  \r\n  \r\n    \r\n  ",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Manual_charges",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"manual_charges\",\r\n    \"columns\": [\r\n        \"user_id\",\r\n        \"frequency\",\r\n        \"cost\",\r\n        \"name\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": {{user_id}}\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb",
+					"protocol": "https",
+					"host": [
+						"n8n",
+						"workflows",
+						"organizedchaos",
+						"cc"
+					],
+					"path": [
+						"webhook",
+						"da176ae9-496c-4f08-baf5-6a78a6a42adb"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AI_email_records",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"AI_Email_Records\",\r\n    \"columns\": [\r\n        \"user_id\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": {{user_id}},\r\n        \"updated_at_after\":\"{{startdate}}\",\r\n        \"updated_at_before\":\"{{enddate}}\"\r\n\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb",
+					"protocol": "https",
+					"host": [
+						"n8n",
+						"workflows",
+						"organizedchaos",
+						"cc"
+					],
+					"path": [
+						"webhook",
+						"da176ae9-496c-4f08-baf5-6a78a6a42adb"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Call_Data",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"Call_Data\",\r\n    \"columns\": [\r\n        \"user_id\",\r\n        \"duration\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": \"{{user_id}}\",\r\n        \"created_at_after\":\"{{startdate}}\",\r\n        \"created_at_before\":\"{{enddate}}\"\r\n\r\n    }\r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Invoices pending",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n  {\r\n    \"table_name\": \"Invoices_Pending\",\r\n    \"columns\": [\r\n      \"user_id\",\r\n      \"paymentamount\",\r\n      \"dateended\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\":\"{{user_id}}\",\r\n        \"datecreated_before\":\"{{enddate}}\",\r\n        \"datecreated_after\":\"{{startdate}}\"\r\n\r\n    }\r\n    \r\n\r\n    \r\n  }\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AI_Chat_Data",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"AI_Chat_Data\",\r\n    \"columns\": [\r\n        \"user_id\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": \"{{user_id}}\",\r\n        \"created_date_before\": \"{{enddate}}\",\r\n        \"created_date_after\": \"{{startdate}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb",
+					"protocol": "https",
+					"host": [
+						"n8n",
+						"workflows",
+						"organizedchaos",
+						"cc"
+					],
+					"path": [
+						"webhook",
+						"da176ae9-496c-4f08-baf5-6a78a6a42adb"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Daily_Email_Cost_Record",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Visualization Script",
+							"// Visualization Script",
+							"const template = `",
+							"<div style=\"max-width: 1100px; margin: 0 auto;\">",
+							"  <h3>Daily Email Cost Record - Charts</h3>",
+							"  <p style=\"margin:4px 0 12px 0; color:#555;\">Interactive charts built from the response. Hover bars for values. Legend is clickable to toggle datasets.</p>",
+							"  <canvas id=\"totalsChart\" height=\"120\"></canvas>",
+							"  <hr/>",
+							"  <canvas id=\"stackedChart\" height=\"160\"></canvas>",
+							"  <script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js\"></script>",
+							"  <script>",
+							"    function getColor(idx, alpha) {",
+							"      var palette = [",
+							"        'rgba(54, 162, 235, ALPHA)',",
+							"        'rgba(255, 99, 132, ALPHA)',",
+							"        'rgba(255, 159, 64, ALPHA)',",
+							"        'rgba(75, 192, 192, ALPHA)',",
+							"        'rgba(153, 102, 255, ALPHA)',",
+							"        'rgba(255, 205, 86, ALPHA)',",
+							"        'rgba(201, 203, 207, ALPHA)'",
+							"      ];",
+							"      return palette[idx % palette.length].replace('ALPHA', alpha);",
+							"    }",
+							"",
+							"    var weekdays = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];",
+							"",
+							"    pm.getData(function (err, data) {",
+							"      var rows = Array.isArray(data.rows) ? data.rows : [];",
+							"",
+							"      // Group items by user_id",
+							"      var byUser = {};",
+							"      rows.forEach(function (item) {",
+							"        var uid = String(item.user_id);",
+							"        if (!byUser[uid]) byUser[uid] = { items: [], total: 0, weekdayTotals: {}};",
+							"        byUser[uid].items.push(item);",
+							"        byUser[uid].total += Number(item.Total_Emails || 0);",
+							"        weekdays.forEach(function (d) {",
+							"          var v = 0;",
+							"          if (item && item[d] && typeof item[d].emails === 'number') v = item[d].emails;",
+							"          byUser[uid].weekdayTotals[d] = (byUser[uid].weekdayTotals[d] || 0) + v;",
+							"        });",
+							"      });",
+							"",
+							"      var users = Object.keys(byUser);",
+							"",
+							"      // Totals per user chart (bar)",
+							"      var totalsCtx = document.getElementById('totalsChart').getContext('2d');",
+							"      var totalsDataset = {",
+							"        label: 'Total Emails',",
+							"        data: users.map(function (u) { return byUser[u].total; }),",
+							"        backgroundColor: users.map(function (_u, i) { return getColor(i, 0.6); }),",
+							"        borderColor: users.map(function (_u, i) { return getColor(i, 1); }),",
+							"        borderWidth: 1",
+							"      };",
+							"      new Chart(totalsCtx, {",
+							"        type: 'bar',",
+							"        data: {",
+							"          labels: users,",
+							"          datasets: [totalsDataset]",
+							"        },",
+							"        options: {",
+							"          responsive: true,",
+							"          title: { display: true, text: 'Total Emails per user_id (sum across items)' },",
+							"          legend: { display: false },",
+							"          tooltips: { mode: 'index', intersect: false },",
+							"          scales: {",
+							"            xAxes: [{ stacked: false, scaleLabel: { display: true, labelString: 'user_id' } }],",
+							"            yAxes: [{ stacked: false, ticks: { beginAtZero: true }, scaleLabel: { display: true, labelString: 'Emails' } }]",
+							"          }",
+							"        }",
+							"      });",
+							"",
+							"      // Stacked weekday chart per user",
+							"      var stackedCtx = document.getElementById('stackedChart').getContext('2d');",
+							"      var weekdayDatasets = weekdays.map(function (day, di) {",
+							"        return {",
+							"          label: day,",
+							"          data: users.map(function (u) { return byUser[u].weekdayTotals[day] || 0; }),",
+							"          backgroundColor: getColor(di, 0.6),",
+							"          borderColor: getColor(di, 1),",
+							"          borderWidth: 1",
+							"        };",
+							"      });",
+							"",
+							"      new Chart(stackedCtx, {",
+							"        type: 'bar',",
+							"        data: {",
+							"          labels: users,",
+							"          datasets: weekdayDatasets",
+							"        },",
+							"        options: {",
+							"          responsive: true,",
+							"          title: { display: true, text: 'Emails by Weekday (stacked) per user_id' },",
+							"          legend: { display: true, position: 'bottom' },",
+							"          tooltips: { mode: 'index', intersect: false },",
+							"          scales: {",
+							"            xAxes: [{ stacked: true, scaleLabel: { display: true, labelString: 'user_id' } }],",
+							"            yAxes: [{ stacked: true, ticks: { beginAtZero: true }, scaleLabel: { display: true, labelString: 'Emails' } }]",
+							"          }",
+							"        }",
+							"      });",
+							"    });",
+							"  </script>",
+							"</div>`;",
+							"",
+							"function createPayload() {",
+							"  let rows = [];",
+							"  try {",
+							"    rows = pm.response.json();",
+							"    if (!Array.isArray(rows)) rows = [];",
+							"  } catch (e) {",
+							"    rows = [];",
+							"  }",
+							"  return { rows: rows };",
+							"}",
+							"",
+							"pm.visualizer.set(template, createPayload());"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"Daily_Email_Cost_Record\",\r\n    \"columns\": [\r\n        \"user_id\",\r\n        \"Sunday\",\r\n        \"Monday\",\r\n        \"Tuesday\",\r\n        \"Wednesday\",\r\n        \"Thursday\",\r\n        \"Friday\",\r\n        \"Saturday\",\r\n        \"Week_Cost\",\r\n        \"Total_Emails\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": 80,\r\n        \"created_date_after\":\"{{startdate}}\",\r\n        \"created_date_before\":\"{{enddate}}\"\r\n        \r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb",
+					"protocol": "https",
+					"host": [
+						"n8n",
+						"workflows",
+						"organizedchaos",
+						"cc"
+					],
+					"path": [
+						"webhook",
+						"da176ae9-496c-4f08-baf5-6a78a6a42adb"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Daily_Chat_Recors_Cost_Record",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"Daily_Chat_Record_Cost_Record\",\r\n    \"columns\": [\r\n        \"user_id\",\r\n        \"Sunday\",\r\n        \"Monday\",\r\n        \"Tuesday\",\r\n        \"Wednesday\",\r\n        \"Thursday\",\r\n        \"Friday\",\r\n        \"Saturday\",\r\n        \"Week_Cost\",\r\n        \"Total_Chats\",\r\n        \"Week_Cost_Overage_Cost\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": \"{{user_id}}\",\r\n        \"created_date_after\":\"{{startdate}}\",\r\n        \"created_date_before\":\"{{enddate}}\"\r\n    }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Daily_calls_cost_Record",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"table_name\": \"Daily_Calls_Cost_Record\",\r\n    \"columns\": [\r\n        \"user_id\",\r\n        \"Sunday\",\r\n        \"Monday\",\r\n        \"Tuesday\",\r\n        \"Wednesday\",\r\n        \"Thursday\",\r\n        \"Friday\",\r\n        \"Saturday\",\r\n        \"Week_Cost\",\r\n        \"Number_Of_Calls\"\r\n    ],\r\n    \"filters\": {\r\n        \"user_id\": \"{{user_id}}\",\r\n        \"created_date_after\": \"{{startdate}}\",\r\n        \"created_date_before\": \"{{enddate}}\"\r\n    }\r\n    \r\n\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb",
+					"protocol": "https",
+					"host": [
+						"n8n",
+						"workflows",
+						"organizedchaos",
+						"cc"
+					],
+					"path": [
+						"webhook",
+						"da176ae9-496c-4f08-baf5-6a78a6a42adb"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": ""
+		}
+	]
+}
