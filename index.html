@@ -13,13 +13,13 @@
         <div class="clients"> <!--SECTION: Clients-->
             <!--TODO: make these into tabs-->
             <h1>Clients</h1>
-            <div id="userform">
+            <div id="userform"> <!--SECTION: User Form-->
                 <label for="start-date"></label>
                 <input type="date" id="start-date" name="start-date"> <!--TODO add a default value for the most recent Sunday-->
                 <label for="end-date"></label>
                 <input type="date" id="end-date" name="end-date"><!-- TODO: make default value for today-->
                 <button id="load-users">Load Users</button>
-            </div>
+            </div> <!--!SECTION -->
             <div class="card">
                 <div class="table-container"> <!-- ANCHOR: main table-->
                     <table id="users-table">
@@ -44,7 +44,10 @@
                     </table>
                 </div> <!--!ANCHOR -->
             <!-- SECTION: Main Visuals -->
-            <div id="main-client-chart">
+            <div id="main-client-chart" class="card">
+                <div class ="chart-container">
+                    <canvas id="main-revenue-chart"></canvas>
+                </div>
 
             </div>
             <!-- SECTION: User Detail View (Initially hidden) -->
