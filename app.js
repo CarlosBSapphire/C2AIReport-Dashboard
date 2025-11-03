@@ -440,6 +440,26 @@ async function showUserDetail(user) {
 
 // SECTION: Initialization and Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    //dates
+    // // Helper function to format a Date object as YYYY-MM-DD
+    const formatDate = (date) => {
+        return date.getFullYear() + '-' +
+            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+            String(date.getDate()).padStart(2, '0');
+    }
+    const startdate = document.getElementById("start-date");
+    const enddate = document.getElementById("end-date");
+    const today = new Date();
+    // // set End Date
+    const formattedEndDate = formatDate(today);
+    enddate.value = formattedEndDate;
+    // // Calculate and set Start Date (Last Sunday)
+    const lastSunday = new Date(today); 
+    // Set the date to the last Sunday (current date - day of week, where Sunday is 0)
+    lastSunday.setDate(today.getDate() - today.getDay()); 
+    const formattedStartDate = formatDate(lastSunday);
+    startdate.value = formattedStartDate;
+    
     // Back Button Handler
     const backButton = document.getElementById('back-button');
     if (backButton) {
