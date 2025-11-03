@@ -452,6 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     // Initialize the dashboard
     loadUsers();
 });
