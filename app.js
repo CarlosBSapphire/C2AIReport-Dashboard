@@ -1,8 +1,10 @@
 //app.js 
 // // SECTION: Global variables
 const API_ENDPOINT = "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb";
-let chartInstance = null;
+let chartInstance = null; // For user detail chart
+let mainChartInstance = null; // NEW: For main page chart
 let currentUser = null;
+const listElements = ['userform', 'users-table', 'main-client-chart']; // Elements visible in the list view
 //!SECTION
 
 // SECTION: Fetch function
@@ -60,6 +62,91 @@ async function getPackageStatsForUser(userId) {
 }
 //!SECTION
 
+// SECTION: View Management
+function toggleViews(view) {
+    const userDetailView = document.getElementById('user-detail-view');
+
+    if (view === 'detail') {
+        listElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        userDetailView.style.display = 'block';
+    } else { // 'list' view
+        userDetailView.style.display = 'none';
+        listElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = ''; // Restore default display
+        });
+    }
+}
+//!SECTION
+
+// SECTION: Main Chart Rendering
+function renderMainClientChart(usersWithStats) {
+    const ctx = document.getElementById('main-revenue-chart').getContext('2d');
+    
+    if (mainChartInstance) {
+        mainChartInstance.destroy();
+    }
+
+    // Sort by revenue for better visualization
+    const sortedUsers = [...usersWithStats].sort((a, b) => b.weeklyPackageRevenue - a.weeklyPackageRevenue);
+
+    const labels = sortedUsers.map(u => `${u.first_name} ${u.last_name}`);
+    const data = sortedUsers.map(u => parseFloat(u.weeklyPackageRevenue.toFixed(2)));
+
+    mainChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Weekly Package Revenue ($)',
+                data: data,
+                backgroundColor: 'rgba(139, 92, 246, 0.8)', // Primary package color
+                borderColor: 'rgba(139, 92, 246, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            indexAxis: 'y', // Horizontal bars for client names
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Total Weekly Package Revenue by Client'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.parsed.x.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+//!SECTION
+
 // SECTION: Load users table
 async function loadUsers() {
     console.log("Loading users...");
@@ -73,7 +160,6 @@ async function loadUsers() {
         console.log("Users loaded:", users);
 
         if (users.length === 0) {
-            // Updated colspan to 6 to match the new number of table columns
             tbody.innerHTML = '<tr><td colspan="6" class="no-data">No users found.</td></tr>'; 
             console.warn("No users found.");
             return;
@@ -84,16 +170,22 @@ async function loadUsers() {
         const userStats = await Promise.all(statsPromises);
         console.log("User stats loaded:", userStats);
 
+        // Combine users and stats
+        const usersWithStats = users.map((user, index) => ({
+            ...user,
+            ...userStats[index]
+        }));
+
+
         tbody.innerHTML = '';
-        users.forEach((user, index) => {
+        usersWithStats.forEach((user, index) => {
             console.log("Rendering user:", user);
-            const stats = userStats[index]; 
             
             const tr = document.createElement('tr');
             tr.className = index % 2 === 0 ? 'even' : 'odd';
 
-            const revenueText = `$${stats.weeklyPackageRevenue.toFixed(2)}`; 
-            const packageText = stats.packageCount;
+            const revenueText = `$${user.weeklyPackageRevenue.toFixed(2)}`; 
+            const packageText = user.packageCount;
 
             tr.innerHTML = `
                 <td>${user.id}</td>
@@ -104,9 +196,14 @@ async function loadUsers() {
             tr.addEventListener('click', () => showUserDetail(user));
             tbody.appendChild(tr);
         });
+        
+        // Render the main chart
+        renderMainClientChart(usersWithStats);
+        
+        // Ensure initial view is 'list'
+        toggleViews('list');
 
     } catch (error) {
-        // Updated colspan to 6
         tbody.innerHTML = `<tr><td colspan="6" class="error">Error loading users: ${error.message}</td></tr>`;
         console.error("Error loading users:", error);
     }
@@ -117,9 +214,8 @@ async function showUserDetail(user) {
     console.log("Showing details for user:", user);
     currentUser = user;
     
-    // Switch views
-    //document.getElementById('user-list-view').style.display = 'none';
-    document.getElementById('user-detail-view').style.display = 'block';
+    // NEW: Switch to detail view
+    toggleViews('detail');
     
     // Update header
     document.getElementById('user-detail-title').textContent = 
@@ -130,9 +226,9 @@ async function showUserDetail(user) {
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '$0.00');
     
     try {
-        // Fetch all revenue data sources (now using the robust fetchData)
+        // Fetch all revenue data sources (NOW INCLUDING 'name' IN manual_charges)
         const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts, invoices] = await Promise.all([
-            fetchData("manual_charges", ["user_id", "frequency", "cost"], { user_id: user.id }),
+            fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: user.id }), // Re-added 'name' for package cards
             fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost","Total_Emails"], { user_id: user.id }),
             fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats"], { user_id: user.id }),
             fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost","Number_Of_Calls"], { user_id: user.id }),
@@ -320,14 +416,6 @@ async function showUserDetail(user) {
             packages.forEach(pkg => {
                 const pkgDiv = document.createElement('div');
                 pkgDiv.className = 'package-item';
-                // Note: package 'name' is expected from the 'manual_charges' columns in the previous step,
-                // but only 'user_id' and 'cost' were fetched here. Assuming 'name' is available 
-                // from the initial load or a structure update is needed. 
-                // Since this section is about the error, I'll proceed with what's available.
-                // Re-added 'name' to the fetchData call in showUserDetail to fix this:
-                // fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: user.id }),
-                // (Note: The user-uploaded app.js had 'name', but the previous turn's fix did not include it, 
-                // so I've ensured it's re-added in the final app.js provided)
                 
                 pkgDiv.innerHTML = `
                     <div class="package-header">
@@ -350,11 +438,23 @@ async function showUserDetail(user) {
     }
 }//!SECTION
 
+// SECTION: Initialization and Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Back Button Handler
+    const backButton = document.getElementById('back-button');
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            toggleViews('list');
+            if (chartInstance) { // Destroy detail chart
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+        });
+    }
 
-
-
-// // SECTION: Intitialize
-loadUsers();
-// //!SECTION
+    // Initialize the dashboard
+    loadUsers();
+});
+//!SECTION
 
 //
