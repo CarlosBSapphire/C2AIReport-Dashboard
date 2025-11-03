@@ -226,7 +226,7 @@ async function showUserDetail(user) {
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '$0.00');
     
     try {
-        // Fetch all revenue data sources (NOW INCLUDING 'name' IN manual_charges)
+        //NOTE - Fetch all revenue data sources 
         const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts, invoices] = await Promise.all([
             fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: user.id }), // Re-added 'name' for package cards
             fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost","Total_Emails"], { user_id: user.id }),
