@@ -307,21 +307,6 @@ async function showUserDetail(user) {
     }
 }//!SECTION
 
-// // SECTION: Back button handler
-// document.getElementById('back-button').addEventListener('click', () => {
-//     document.getElementById('user-list-view').style.display = 'block';
-//     document.getElementById('user-detail-view').style.display = 'none';
-    
-//     if (chartInstance) {
-//         chartInstance.destroy();
-//         chartInstance = null;
-//     }
-    
-//     currentUser = null;
-// });
-
-// //!SECTION
-
 
 // // SECTION: Intitialize
 //TODO - Set dates and add listeners if they change:
@@ -353,7 +338,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
        const formattedDate = `${year}-${month}-${day}`;
        dateInput.value = formattedDate;
    });//!SECTION
-loadUsers();
-// //!SECTION
 
+// //!SECTION : onload
+loadUsers();
 //
