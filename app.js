@@ -7,8 +7,9 @@ let radarChartInstance = null; // For radar chart
 let currentUser = null;
 let currentStartDate = null;
 let currentEndDate = null;
+//!SECTION
 
-// Session cache for API responses
+// SECTION -Session cache for API responses
 const sessionCache = {
     data: {},
     set(key, value) {
@@ -261,13 +262,13 @@ async function showRadarChart(date, aggregatedData) {
                     dayData.chats,
                     dayData.calls
                 ],
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+                // backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                // borderColor: 'rgba(54, 162, 235, 1)',
+                // borderWidth: 2,
+                // pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                // pointBorderColor: '#fff',
+                // pointHoverBackgroundColor: '#fff',
+                // pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
             }]
         },
         options: {
@@ -719,8 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadButton.addEventListener('click', () => {
         sessionCache.clear(); // Clear cache on manual reload
         loadUsers();
-        document.getElementById('user-detail-view').style.display = 'none';
-        document.getElementById('radar-chart-container').style.display = 'none';
+        // document.getElementById('user-detail-view').style.display = 'none';
+        // document.getElementById('radar-chart-container').style.display = 'none';
     });
     
     // Tab handlers

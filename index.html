@@ -64,7 +64,7 @@
                 </div>
             </div>
 
-            <!-- User Detail View (Below table, initially hidden) -->
+            <!-- User Detail View -->
             <div id="user-detail-view" style="display: none;">                
                 <header class="detail-header">
                     <h2 id="user-detail-title">Revenue Breakdown: Client Name</h2>
@@ -114,7 +114,17 @@
                         <!-- Package items will be dynamically inserted here -->
                     </div>
                 </div>
+
             </div>
+
+           <!-- SECTION: Daily Revenue Chart -->
+            <div id="radar-chart-container" class="card chart-reserved" style="display: none;">
+                <h3>Daily Revenue Breakdown for <span id="radar-date"></span></h3>
+                <div class="chart-container radar-container">
+                    <canvas id="radar-chart"></canvas>
+                </div>
+            </div>
+            <!-- !SECTION -->
         </div>
 
         <!-- Commissions Tab Content -->
