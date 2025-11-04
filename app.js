@@ -3,9 +3,31 @@
 const API_ENDPOINT = "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb";
 let chartInstance = null; // For user detail chart
 let mainChartInstance = null; // For main page chart
+let radarChartInstance = null; // For radar chart
 let currentUser = null;
 let currentStartDate = null;
 let currentEndDate = null;
+
+// Session cache for API responses
+const sessionCache = {
+    data: {},
+    set(key, value) {
+        this.data[key] = {
+            value: value,
+            timestamp: Date.now()
+        };
+    },
+    get(key, maxAge = 300000) { // Default 5 min cache
+        const cached = this.data[key];
+        if (cached && (Date.now() - cached.timestamp < maxAge)) {
+            return cached.value;
+        }
+        return null;
+    },
+    clear() {
+        this.data = {};
+    }
+};
 //!SECTION
 
 // SECTION: Date Helper Functions
@@ -41,8 +63,17 @@ const addDaysToDate = (dateString, days) => {
 }
 //!SECTION
 
-// SECTION: Fetch function
+// SECTION: Fetch function with caching
 async function fetchData(tableName, columns, filters = {}, options={}) {
+    const cacheKey = JSON.stringify({ tableName, columns, filters });
+    
+    // Check cache first
+    const cached = sessionCache.get(cacheKey);
+    if (cached) {
+        console.log(`Using cached data for: ${tableName}`);
+        return cached;
+    }
+    
     console.log(`Fetching data from table: ${tableName} with filters:`, filters);
     
     // Add date filters if they exist globally
@@ -91,12 +122,17 @@ async function fetchData(tableName, columns, filters = {}, options={}) {
         return []; 
     }
     
-    if (Array.isArray(result)) return result;
-    if (result && typeof result === "object") {
-        return result.rows || result.data || result.result || [];
+    let finalData = [];
+    if (Array.isArray(result)) {
+        finalData = result;
+    } else if (result && typeof result === "object") {
+        finalData = result.rows || result.data || result.result || [];
     }
-    console.error("No data found in expected format for table:", tableName);
-    return [];
+    
+    // Cache the result
+    sessionCache.set(cacheKey, finalData);
+    
+    return finalData;
 }
 //!SECTION
 
@@ -197,6 +233,77 @@ async function getTotalRevenueForUser(userId, dates) {
 }
 //!SECTION
 
+// SECTION: Radar Chart for Daily Breakdown
+async function showRadarChart(date, aggregatedData) {
+    const radarContainer = document.getElementById('radar-chart-container');
+    const radarCanvas = document.getElementById('radar-chart');
+    
+    radarContainer.style.display = 'block';
+    document.getElementById('radar-date').textContent = date;
+    
+    const dayData = aggregatedData.find(d => d.date === date);
+    if (!dayData) return;
+    
+    if (radarChartInstance) {
+        radarChartInstance.destroy();
+    }
+    
+    const ctx = radarCanvas.getContext('2d');
+    radarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Packages', 'Emails', 'Chats', 'Calls'],
+            datasets: [{
+                label: 'Revenue by Type',
+                data: [
+                    dayData.packages,
+                    dayData.emails,
+                    dayData.chats,
+                    dayData.calls
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Revenue Breakdown by Type'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': $' + context.parsed.r.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+//!SECTION
+
 // SECTION: Main Chart Rendering - Line Graph by Date
 async function renderMainClientChart(users, dates) {
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
@@ -220,6 +327,7 @@ async function renderMainClientChart(users, dates) {
             calls += dayRevenue.calls;
         });
         return {
+            date: date,
             total: parseFloat((packages + emails + chats + calls).toFixed(2)),
             packages: parseFloat(packages.toFixed(2)),
             emails: parseFloat(emails.toFixed(2)),
@@ -238,12 +346,11 @@ async function renderMainClientChart(users, dates) {
                 label: 'Total Revenue',
                 data: totalRevenueByDate,
                 borderWidth: 3,
-                //fill: true, //NOTE - do we want this filled?
                 tension: 0.4,
-                pointRadius: 2,
-                pointHoverRadius: 6,
+                pointRadius: 4,
+                pointHoverRadius: 8,
                 trendlineLinear:{
-                    lineStyle: "dotted", //NOTE - "dotted" | "solid" | "dashed" | "dashdot" are the options
+                    lineStyle: "dotted",
                     width: 2
                 }
             }]
@@ -251,6 +358,13 @@ async function renderMainClientChart(users, dates) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            onClick: (event, activeElements) => {
+                if (activeElements.length > 0) {
+                    const index = activeElements[0].index;
+                    const clickedDate = dates[index];
+                    showRadarChart(clickedDate, aggregatedData);
+                }
+            },
             scales: {
                 x: {
                     title: {
@@ -281,7 +395,7 @@ async function renderMainClientChart(users, dates) {
                 },
                 title: {
                     display: true,
-                    text: 'Total Daily Revenue (All Clients)'
+                    text: 'Total Daily Revenue (All Clients) - Click points to see breakdown'
                 },
                 tooltip: {
                     callbacks: {
@@ -492,7 +606,7 @@ async function showUserDetail(user) {
                                 return 'Total: $' + total.toFixed(2);
                             },
                             label: function() {
-                                return ''; // Remove individual label to avoid duplication
+                                return '';
                             }
                         }
                     },
@@ -593,16 +707,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Date change handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
+        sessionCache.clear(); // Clear cache on date change
     });
     
     endDateInput.addEventListener('change', (e) => {
         currentEndDate = e.target.value;
+        sessionCache.clear(); // Clear cache on date change
     });
     
     // Load button handler
     loadButton.addEventListener('click', () => {
+        sessionCache.clear(); // Clear cache on manual reload
         loadUsers();
         document.getElementById('user-detail-view').style.display = 'none';
+        document.getElementById('radar-chart-container').style.display = 'none';
     });
     
     // Tab handlers
