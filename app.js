@@ -32,7 +32,7 @@ const sessionCache = {
 };
 //!SECTION
 
-// SECTION: Date Helper Functions
+/* SECTION: Date Helper Functions */
 const formatDate = (date) => {
     return date.getFullYear() + '-' +
         String(date.getMonth() + 1).padStart(2, '0') + '-' +
@@ -65,8 +65,31 @@ const addDaysToDate = (dateString, days) => {
 }
 //!SECTION
 
-// SECTION: Fetch function with caching
-async function fetchData(tableName, columns, filters = {}, options={}) {
+/** SECTION: Fetch function with caching
+    function to fetch all nessasary data
+    See dtatbase at https://db.sapphiremediallc.com/dashboard
+    @param {any} tableName - name of the Table as seen in database
+    @param {any} columns - name of the column or feild as shown in the database,
+    @param {} filters - filters to be applied to the search format as such:
+            {
+                "filter_key_1": "filter_value_1",
+                "filter_key_2": [
+                    "filter_value_2a",
+                    "filter_value_2b"
+                ],
+                "filter_key_3_before": "2025-01-01",
+                "filter_key_4_after": "2025-02-01",
+                "filter_key_5_like": "%keyword%"}
+**/
+/*NOTE - can add 
+"page": 1,
+    "limit": 50,
+    "sort": {
+      "column": "column_1",
+      "direction": "ASC"
+    }
+*/
+async function fetchData(tableName, columns, filters = {}) {
     const cacheKey = JSON.stringify({ tableName, columns, filters });
     
     // Check cache first
@@ -88,7 +111,7 @@ async function fetchData(tableName, columns, filters = {}, options={}) {
             'AI_Email_Records': 'updated_at',
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
-        };
+        }; //NOTE - after we fix the database we need to change this
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
@@ -140,7 +163,7 @@ async function fetchData(tableName, columns, filters = {}, options={}) {
 
 // SECTION: Helper function to get package stats
 async function getPackageStatsForUser(userId) {
-    const packages = await fetchData("manual_charges", ["user_id", "cost", "name"], { user_id: userId });
+    const packages = await fetchData("manual_charges", ["user_id", "cost", "name"], { user_id: userId }); //NOTE - will need to change after database update
     const packageCount = packages.length;
     const weeklyPackageRevenue = packages.reduce((sum, pkg) => {
         return sum + (parseFloat(pkg.cost) || 0);
@@ -155,7 +178,7 @@ async function getRevenueByDateForUser(userId, dates) {
         fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
-    ]);
+    ]); //NOTE - this will change after database update
 
     const revenueByDate = {};
     dates.forEach(date => {
@@ -236,15 +259,15 @@ async function getTotalRevenueForUser(userId, dates) {
 //!SECTION
 
 // SECTION: Radar Chart for Daily Breakdown
-//FIXME - this is showing catagory on the axis and the colors, colors should be the catagory and users should be the axis
-async function showRadarChart(date, aggregatedData) {
+//FIXME - colors should be the catagory and users should be the axis
+async function showRadarChart(date, aggregatedDatabyDay) {
     const radarContainer = document.getElementById('radar-chart-container');
     const radarCanvas = document.getElementById('radar-chart');
     
     radarContainer.style.display = 'block';
     document.getElementById('radar-date').textContent = date;
     
-    const dayData = aggregatedData.find(d => d.date === date);
+    const dayData = aggregatedDatabyDay.find(d => d.date === date);
     if (!dayData) return;
     
     if (radarChartInstance) {
@@ -255,7 +278,7 @@ async function showRadarChart(date, aggregatedData) {
     radarChartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['Packages', 'Emails', 'Chats', 'Calls'],
+            labels: ['a','b'], //FIXME Axis should be users and colors should be labels 
             datasets: [{
                 label: 'Revenue by Type',
                 data: [
@@ -289,7 +312,7 @@ async function showRadarChart(date, aggregatedData) {
             },
             plugins: {
                 legend: {
-                    display: false
+                    display: true
                 },
                 title: {
                     display: true,
@@ -321,7 +344,7 @@ async function renderMainClientChart(users, dates) {
     const userRevenueByDate = await Promise.all(revenuePromises);
 
     // Aggregate total revenue by date and category across all users
-    const aggregatedData = dates.map(date => {
+    const aggregatedDatabyDay = dates.map(date => {
         let packages = 0, emails = 0, chats = 0, calls = 0;
         userRevenueByDate.forEach(userRevenue => {
             const dayRevenue = userRevenue[date];
@@ -340,7 +363,7 @@ async function renderMainClientChart(users, dates) {
         };
     });
 
-    const totalRevenueByDate = aggregatedData.map(d => d.total);
+    const totalRevenueByDate = aggregatedDatabyDay.map(d => d.total);
 
     mainChartInstance = new Chart(ctx, {
         type: 'line',
@@ -366,7 +389,7 @@ async function renderMainClientChart(users, dates) {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedDate = dates[index];
-                    showRadarChart(clickedDate, aggregatedData);
+                    showRadarChart(clickedDate, aggregatedDatabyDay);
                 }
             },
             scales: {
@@ -408,7 +431,7 @@ async function renderMainClientChart(users, dates) {
                         },
                         afterLabel: function(context) {
                             const index = context.dataIndex;
-                            const data = aggregatedData[index];
+                            const data = aggregatedDatabyDay[index];
                             return [
                                 'Packages: $' + data.packages.toFixed(2),
                                 'Emails: $' + data.emails.toFixed(2),
@@ -436,7 +459,7 @@ async function loadUsers() {
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
-        );
+        ); //NOTE - will need to change after database update maybe?
         console.log("Users loaded:", users);
 
         if (users.length === 0) {
@@ -723,8 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadButton.addEventListener('click', () => {
         sessionCache.clear(); // Clear cache on manual reload
         loadUsers();
-        // document.getElementById('user-detail-view').style.display = 'none';
-        // document.getElementById('radar-chart-container').style.display = 'none';
+        document.getElementById('user-detail-view').style.display = 'none';
+        document.getElementById('radar-chart-container').style.display = 'none';
     });
     
     // Tab handlers
