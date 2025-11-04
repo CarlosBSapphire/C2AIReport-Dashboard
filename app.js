@@ -264,7 +264,7 @@ async function showRadarChart(date, aggregatedData) {
                     dayData.chats,
                     dayData.calls
                 ],
-                // NOTE Colors to add maybe?
+                // FIXME add colors from styles.css
                 // backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 // borderColor: 'rgba(54, 162, 235, 1)',
                 // borderWidth: 2,
