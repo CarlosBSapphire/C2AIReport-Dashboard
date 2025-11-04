@@ -12,17 +12,18 @@
         <script type="module" src="app.js"></script>
     </head>
     <body>
-        <!-- Tab Navigation -->
+        <!-- SECTION Tab Navigation -->
         <div class="tab-navigation">
             <button id="clients-tab" class="tab-button active">Clients</button>
             <button id="commissions-tab" class="tab-button">Commissions</button>
         </div>
+        <!-- !SECTION -->
 
-        <!-- Clients Tab Content -->
+        <!-- SECTION Clients Tab -->
         <div id="clients-content" class="tab-content">
             <h1>Clients</h1>
             
-            <!-- User Form -->
+            <!-- SECTION User Form -->
             <div id="userform" class="form-section">
                 <label for="start-date">Start Date:</label>
                 <input type="date" id="start-date" name="start-date">
@@ -30,15 +31,17 @@
                 <input type="date" id="end-date" name="end-date">
                 <button id="load-users" class="btn-primary">Load Users</button>
             </div>
+            <!-- !SECTION -->
 
-            <!-- Main Chart -->
+            <!-- SECTION Main Chart -->
             <div id="main-client-chart" class="card">
                 <div class="chart-container">
                     <canvas id="main-revenue-chart"></canvas>
                 </div>
             </div>
+            <!-- !SECTION -->
 
-            <!-- Users Table -->
+            <!-- SECTION Users Table -->
             <div class="card">
                 <div class="table-container">
                     <table id="users-table">
@@ -63,8 +66,9 @@
                     </table>
                 </div>
             </div>
+            <!-- !SECTION -->
 
-            <!-- User Detail View -->
+            <!-- SECTION: User Detail View -->
             <div id="user-detail-view" style="display: none;">                
                 <header class="detail-header">
                     <h2 id="user-detail-title">Revenue Breakdown: Client Name</h2>
@@ -115,7 +119,8 @@
                     </div>
                 </div>
 
-            </div>
+            </div> 
+            <!-- !SECTION -->
 
            <!-- SECTION: Daily Revenue Chart -->
             <div id="radar-chart-container" class="card chart-reserved" style="display: none;">
@@ -126,8 +131,8 @@
             </div>
             <!-- !SECTION -->
         </div>
-
-        <!-- Commissions Tab Content -->
+        <!-- !SECTION -->
+        <!-- SECTION Commissions Tab -->
         <div id="commissions-content" class="tab-content" style="display: none;">
             <h1>Commissions</h1>
             <div class="card">
@@ -135,6 +140,7 @@
                 Maybe need commisions table to be built out?-->
             </div>
         </div>
+        <!-- !SECTION -->
     </body>
     <footer>
         <!-- TODO: add legal stuff -->

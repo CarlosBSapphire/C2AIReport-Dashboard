@@ -3,13 +3,14 @@
 const API_ENDPOINT = "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb";
 let chartInstance = null; // For user detail chart
 let mainChartInstance = null; // For main page chart
-let radarChartInstance = null; // For radar chart
+let radarChartInstance = null; // For daily revenue radar chart
 let currentUser = null;
 let currentStartDate = null;
 let currentEndDate = null;
 //!SECTION
 
 // SECTION -Session cache for API responses
+//FIXME - change this to be php instead of node. none of the servers work with node create a new file if you have too
 const sessionCache = {
     data: {},
     set(key, value) {
@@ -235,6 +236,7 @@ async function getTotalRevenueForUser(userId, dates) {
 //!SECTION
 
 // SECTION: Radar Chart for Daily Breakdown
+//FIXME - this is showing catagory on the axis and the colors, colors should be the catagory and users should be the axis
 async function showRadarChart(date, aggregatedData) {
     const radarContainer = document.getElementById('radar-chart-container');
     const radarCanvas = document.getElementById('radar-chart');
@@ -262,6 +264,7 @@ async function showRadarChart(date, aggregatedData) {
                     dayData.chats,
                     dayData.calls
                 ],
+                // NOTE Colors to add maybe?
                 // backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 // borderColor: 'rgba(54, 162, 235, 1)',
                 // borderWidth: 2,

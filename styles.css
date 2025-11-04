@@ -1,0 +1,10 @@
+:root{
+    /* TODO: ADD Light Root colors */
+    --removeme:#ddccaa;
+}
+@media (prefers-color-scheme: dark){
+    /* TODO: add darkmode colors */
+    :root{
+        --removeme: #775533;
+    }
+}
