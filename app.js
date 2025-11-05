@@ -323,7 +323,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const text = await response.text();
     
     if (!text || text.trim().length === 0) {
-        console.warn(`Empty response body received from table: ${tableName}`);
+        console.warn(`Empty response body received from table: ${tableName}`);//FIXME - show user.id if there is one in the warning
         return [];
     }
     
@@ -968,27 +968,70 @@ async function renderMainClientChart(users, dates, dateType) {
 
     const chartLabels = aggregatedData.map(d => d.label);
     const chartTotals = aggregatedData.map(d => d.total);//FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
-
+    const chartPackages = aggregatedData.map(d=>d.packageCost);
+    //make datasets
+    datasets= [
+        { //NOTE thisis just so we can have a trendline
+            label:'totals',
+            data:chartTotals,
+            backgroundColor: 'rgba(0, 0, 0, 0)', 
+            trendlineLinear: {
+                    colorMin: String(getCSSVariable(--text)),
+                    colorMax: String(getCSSVariable(--text)),
+                    lineStyle: "solid",
+                    width: 2
+                }
+        },
+        {
+            label:'Packages',
+            data:chartPackages,
+            backgroundColor:chartColors.packages.border
+        },
+        {
+            label:'Emails',
+            data: aggregatedData.map(d=>d.email_cost_overage), //FIXME I don''t think this is right
+            backgroundColor:chartColors.emails.border
+        },
+        {
+            label:'Chats',
+            data:aggregatedData.map(d=>d.dailyChatCosts),
+            backgroundColor:chartColors.chats.border
+        },
+        {
+            label:'Calls',
+            data:aggregatedData.map(d=>d.dailyCallsCosts),
+            backgroundColor:chartColors.calls.border
+        }
+    ]
     mainChartInstance = new Chart(ctx, {
         //FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
         type: 'bar',
         data: {
             labels: chartLabels,
-            datasets: [{
-                label: 'Total Revenue',
-                data: chartTotals,
-                //borderColor: getCSSVariable('--text'),
-                backgroundColor: getCSSVariable('--text'),
-                borderWidth: 3,
-                // tension: 0.4, //NOTE - this is flor line charts
-                pointRadius: 4,
-                pointHoverRadius: 8,
+            datasets: datasets,
                 trendlineLinear: {
-                    lineStyle: "dotted",
+                    
+                    lineStyle: "solid",
                     width: 2
                 }
-            }]
+            }
         },
+        // const datasets = [
+        //     {
+        //         label: 'Emails',
+        //         data: labels.map(date => parseFloat(revenueByDate[date].emails.toFixed(2))),
+        //         backgroundColor: chartColors.emails.border
+        //     },
+        //     {
+        //         label: 'Chats',
+        //         data: labels.map(date => parseFloat(revenueByDate[date].chats.toFixed(2))),
+        //         backgroundColor: chartColors.chats.border
+        //     },
+        //     {
+        //         label: 'Calls',
+        //         data: labels.map(date => parseFloat(revenueByDate[date].calls.toFixed(2))),
+        //         backgroundColor: chartColors.packages.border
+        //     }
         options: {
             responsive: true,
             maintainAspectRatio: true,
@@ -1027,9 +1070,6 @@ async function renderMainClientChart(users, dates, dateType) {
                 }
             },
             plugins: {
-                legend: {
-                    display: false
-                },
                 title: {
                     display: true,
                     text: 'Total Revenue (All Clients) - Click points to see breakdown' 
@@ -1369,7 +1409,7 @@ async function showUserDetail(user) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Tab Management
+// SECTION: Nav
 // FIXME chang to sidebar navigation
 // ============================================================================
 
@@ -1387,23 +1427,14 @@ async function showUserDetail(user) {
  * switchTab('clients'); // Shows clients tab
  * switchTab('commissions'); // Shows commissions tab
  */
-function switchTab(tabName) {
-    const clientsTab = document.getElementById('clients-tab');
-    const commissionsTab = document.getElementById('commissions-tab');
-    const clientsContent = document.getElementById('clients-content');
-    const commissionsContent = document.getElementById('commissions-content');
+function openNav() {
+  document.getElementById("mySidenav").style.width = "250px";
+  document.getElementById("content").style.marginLeft = "250px";
+}
 
-    if (tabName === 'clients') {
-        clientsTab.classList.add('active');
-        commissionsTab.classList.remove('active');
-        clientsContent.style.display = 'block';
-        commissionsContent.style.display = 'none';
-    } else if (tabName === 'commissions') {
-        commissionsTab.classList.add('active');
-        clientsTab.classList.remove('active');
-        commissionsContent.style.display = 'block';
-        clientsContent.style.display = 'none';
-    }
+function closeNav() {
+  document.getElementById("mySidenav").style.width = "0";
+  document.getElementById("content").style.marginLeft= "0";
 }
 
 //!SECTION

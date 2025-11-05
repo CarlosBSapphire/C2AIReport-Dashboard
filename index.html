@@ -12,11 +12,12 @@
         <script type="module" src="app.js"></script>
     </head>
     <body>
-        <!--SECTION Headder-->
+        <!--FIXME make this a grid or flexbox or something?-->
+        <!--SECTION Header-->
         <header>
             <h1>C2AI</h1>
             <!--TODO add logo?-->
-            <div class="'company-buttons">
+            <div class="company-buttons">
                 <button id="companyname-button" class="btn-primary" value="company" commandfor="changeCompany" command="setcompany('companyname')">Company name here</button> <!--TODO:you will also need to create thejs to change the company -->
             </div>
         </header>
@@ -24,16 +25,15 @@
         
         <!--SECTION sidebar-->
         <div class = "sidebar">
-        
-            <div class="tab-navigation">
-                <button id="clients-tab" class="tab-button active">Clients</button>
-                <button id="commissions-tab" class="tab-button">Commissions</button>
-            </div>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+            <a href="#clients-content">Clients</a>
+            <a href="#commissions-content">Commisions</a>
+            <!--TODO: Could add a contact thing here-->
         </div>
         <!--SECTION-->
 
         <!-- SECTION Clients Tab -->
-        <div id="clients-content" class="tab-content">
+        <div id="clients-content" class="content">
             <h1>Clients</h1>
             
             <!-- SECTION User Form -->
@@ -153,7 +153,7 @@
         <!-- !SECTION -->
         
         <!-- SECTION Commissions Tab -->
-        <div id="commissions-content" class="tab-content" style="display: none;">
+        <div id="commissions-content" class="content" style="display: none;">
             <h1>Commissions</h1>
             <div class="card">
                 <p>Commissions functionality coming soon...</p>

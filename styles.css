@@ -197,6 +197,8 @@ body {
     padding: 1rem;
 }
 
+
+
 /* ============================================================================
    SECTION 4: Layout & Structure
    ============================================================================ */
@@ -204,23 +206,32 @@ body {
 /**
  * Main container for all content
  */
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 1rem;
+.container{
+  display: grid;
+  grid-template-areas: 
+    "header header"
+    "menu content"
+    "footer footer";
+  grid-template-columns: 1fr 3fr; /*REVIEW maybe change this?*/
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-/**
- * Tab content sections
- */
-.tab-content {
-    animation: fadeIn 0.3s ease-in;
+.container div.header{
+  grid-area: header;
+}
+.container div.content {
+  margin-left: 200px;
+  padding: 1px 16px;
+  height: 1000px;
+  grid-area: content;
+}
+.content div.footer{
+  grid-area: footer;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+
 
 /* ============================================================================
    SECTION 5: Typography
@@ -260,46 +271,50 @@ p {
 }
 
 /* ============================================================================
-   SECTION 6: Navigation & Tabs
+   SECTION 6: Navigation 
+   
    ============================================================================ */
 
-/**
- * Tab navigation bar
- */
-.tab-navigation {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-    border-bottom: 2px solid var(--border);
+.company-buttons{
+  padding-left: 500 px;
 }
 
-/**
- * Individual tab button
- */
-.tab-button {
-    padding: 0.75rem 1.5rem;
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--text-muted);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    bottom: -2px;
+.sidebar {
+  margin: 0;
+  padding: 0;
+  width: 200px;
+  background-color: var(--primary-btn-bg);
+  position: fixed;
+  height: 100%;
+  overflow: auto;
 }
 
-.tab-button:hover {
-    color: var(--primary);
-    background: var(--input-active-bg);
+.sidebar a {
+  display: block;
+  color: white;
+  padding: 16px;
+  text-decoration: none;
+}
+ 
+.sidebar a.active {
+  background-color: #04AA6D;
+  color: white;
 }
 
-.tab-button.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    font-weight: 600;
+.sidebar a:hover:not(.active) {
+  background-color: #555;
+  color: white;
 }
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+} /*FIXME make this function*/
+
+
 
 /* ============================================================================
    SECTION 7: Forms & Inputs
@@ -837,6 +852,8 @@ canvas {
     .btn-secondary {
         width: 100%;
     }
+
+    .sidebar{ padding-top: 15px;}
 }
 
 /**
@@ -863,7 +880,7 @@ canvas {
 }
 
 
-/*FIXME add sidebar navigation*/
+
 
 /* !SECTION */
 
