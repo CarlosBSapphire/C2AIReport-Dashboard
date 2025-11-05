@@ -166,7 +166,7 @@ async function fetchData(tableName, columns, filters = {}) {
 
 // SECTION: Helper function to get package stats
 async function getPackageStatsForUser(userId) {
-    const packages = await fetchData("manual_charges", ["user_id", "cost", "name"], { user_id: userId });
+    const packages = await fetchData("manual_charges", ["user_id", "cost", "name","frequency"], { user_id: userId }); //FIXME - the frequency matters adapt the rest of this code around that
     const packageCount = packages.length;
     const weeklyPackageRevenue = packages.reduce((sum, pkg) => {
         return sum + (parseFloat(pkg.cost) || 0);
@@ -194,6 +194,7 @@ async function getRevenueByDateForUser(userId, dates) {
     });
 
     // Calculate daily package cost
+    //FIXME there is often multiple packages and thus multiple entries uner the same user
     const weeklyPackageCost = packages.reduce((sum, pkg) => sum + (parseFloat(pkg.cost) || 0), 0);
     const dailyPackageCost = weeklyPackageCost / 7;
     dates.forEach(date => {
@@ -261,7 +262,7 @@ async function getTotalRevenueForUser(userId, dates) {
 }
 //!SECTION
 
-// SECTION: Radar Chart for Daily Breakdown - Fixed to show users on axis
+// SECTION: Radar Chart for Revenue Breakdown - Fixed to show users on axis
 async function showRadarChart(period,users) {
     const radarContainer = document.getElementById('radar-chart-container');
     const radarCanvas = document.getElementById('radar-chart');
@@ -284,12 +285,11 @@ async function showRadarChart(period,users) {
     // Get revenue data for period
     const userRevenuePromises = users.map(async (user) => {
         const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange);
-        let aggregatedRevenue = {packages:0,emails:0,chats:0,calls:0};//start out with everything at 0
+        let aggregatedRevenue = {emails:0,chats:0,calls:0};//start out with everything at 0
         //sum everything
         datesInPeriod.forEach(date =>{
             const dayRevenue=revenueByDate[date];
             if(dayRevenue){
-                aggregatedRevenue.packages+=dayRevenue.packages;
                 aggregatedRevenue.emails+=dayRevenue.emails;
                 aggregatedRevenue.chats+=dayRevenue.chats;
                 aggregatedRevenue.calls+=dayRevenue.calls;
@@ -308,17 +308,6 @@ async function showRadarChart(period,users) {
     
     // Create datasets for each revenue type
     const datasets = [ //FIXME this section needs styling from styles.css
-        {
-            label: 'Packages',
-            data: userRevenueData.map(u => u.revenue.packages),
-            backgroundColor: 'rgba(99, 102, 241, 0.2)',
-            borderColor: 'rgba(99, 102, 241, 1)',
-            borderWidth: 2,
-            pointBackgroundColor: 'rgba(99, 102, 241, 1)',
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
-        },
         {
             label: 'Emails',
             data: userRevenueData.map(u => u.revenue.emails),
@@ -417,6 +406,8 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
         const aggregated = {};
 
         aggregatedDatabyDay.forEach(day => {
+            console.log('here');
+            console.log(day);
             const dateObj = new Date(day.date);
             let key = day.date; 
 
@@ -827,7 +818,7 @@ async function showUserDetail(user) {
                         cost: 0,
                         count: 0,
                         frequency: pkg.frequency || 'Weekly'
-                    }; //REVIEW - update
+                    }; 
                 }
                 packageAggregation[name].cost += parseFloat(pkg.cost) || 0;
                 packageAggregation[name].count += 1;
