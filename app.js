@@ -1,6 +1,7 @@
 //app.js 
 // SECTION: Global variables
 const API_ENDPOINT = "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb";
+const CACHE_ENDPOINT = "/cache.php"; // Update this to your actual PHP cache endpoint
 let chartInstance = null; // For user detail chart
 let mainChartInstance = null; // For main page chart
 let radarChartInstance = null; // For daily revenue radar chart
@@ -9,25 +10,47 @@ let currentStartDate = null;
 let currentEndDate = null;
 //!SECTION
 
-// SECTION -Session cache for API responses
-//FIXME - change this to be php instead of node. none of the servers work with node create a new file if you have too
+// SECTION - PHP-based session cache
 const sessionCache = {
-    data: {},
-    set(key, value) {
-        this.data[key] = {
-            value: value,
-            timestamp: Date.now()
-        };
-    },
-    get(key, maxAge = 300000) { // Default 5 min cache
-        const cached = this.data[key];
-        if (cached && (Date.now() - cached.timestamp < maxAge)) {
-            return cached.value;
+    async set(key, value) {
+        try {
+            const response = await fetch(CACHE_ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ key, value })
+            });
+            const result = await response.json();
+            return result.success;
+        } catch (error) {
+            console.error("Cache set error:", error);
+            return false;
         }
-        return null;
     },
-    clear() {
-        this.data = {};
+    
+    async get(key, maxAge = 300000) { // Default 5 min cache
+        try {
+            const response = await fetch(`${CACHE_ENDPOINT}?key=${encodeURIComponent(key)}&maxAge=${maxAge}`);
+            const result = await response.json();
+            return result.success ? result.data : null;
+        } catch (error) {
+            console.error("Cache get error:", error);
+            return null;
+        }
+    },
+    
+    async clear(key = null) {
+        try {
+            const response = await fetch(CACHE_ENDPOINT, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ key })
+            });
+            const result = await response.json();
+            return result.success;
+        } catch (error) {
+            console.error("Cache clear error:", error);
+            return false;
+        }
     }
 };
 //!SECTION
@@ -65,35 +88,12 @@ const addDaysToDate = (dateString, days) => {
 }
 //!SECTION
 
-/** SECTION: Fetch function with caching
-    function to fetch all nessasary data
-    See dtatbase at https://db.sapphiremediallc.com/dashboard
-    @param {any} tableName - name of the Table as seen in database
-    @param {any} columns - name of the column or feild as shown in the database,
-    @param {} filters - filters to be applied to the search format as such:
-            {
-                "filter_key_1": "filter_value_1",
-                "filter_key_2": [
-                    "filter_value_2a",
-                    "filter_value_2b"
-                ],
-                "filter_key_3_before": "2025-01-01",
-                "filter_key_4_after": "2025-02-01",
-                "filter_key_5_like": "%keyword%"}
-**/
-/*NOTE - can add 
-"page": 1,
-    "limit": 50,
-    "sort": {
-      "column": "column_1",
-      "direction": "ASC"
-    }
-*/
+/** SECTION: Fetch function with caching **/
 async function fetchData(tableName, columns, filters = {}) {
     const cacheKey = JSON.stringify({ tableName, columns, filters });
     
     // Check cache first
-    const cached = sessionCache.get(cacheKey);
+    const cached = await sessionCache.get(cacheKey);
     if (cached) {
         console.log(`Using cached data for: ${tableName}`);
         return cached;
@@ -111,7 +111,7 @@ async function fetchData(tableName, columns, filters = {}) {
             'AI_Email_Records': 'updated_at',
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
-        }; //NOTE - after we fix the database we need to change this
+        };
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
@@ -155,7 +155,7 @@ async function fetchData(tableName, columns, filters = {}) {
     }
     
     // Cache the result
-    sessionCache.set(cacheKey, finalData);
+    await sessionCache.set(cacheKey, finalData);
     
     return finalData;
 }
@@ -163,7 +163,7 @@ async function fetchData(tableName, columns, filters = {}) {
 
 // SECTION: Helper function to get package stats
 async function getPackageStatsForUser(userId) {
-    const packages = await fetchData("manual_charges", ["user_id", "cost", "name"], { user_id: userId }); //NOTE - will need to change after database update
+    const packages = await fetchData("manual_charges", ["user_id", "cost", "name"], { user_id: userId });
     const packageCount = packages.length;
     const weeklyPackageRevenue = packages.reduce((sum, pkg) => {
         return sum + (parseFloat(pkg.cost) || 0);
@@ -178,7 +178,7 @@ async function getRevenueByDateForUser(userId, dates) {
         fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
-    ]); //NOTE - this will change after database update
+    ]);
 
     const revenueByDate = {};
     dates.forEach(date => {
@@ -258,44 +258,84 @@ async function getTotalRevenueForUser(userId, dates) {
 }
 //!SECTION
 
-// SECTION: Radar Chart for Daily Breakdown
-//FIXME - colors should be the catagory and users should be the axis
-async function showRadarChart(date, aggregatedDatabyDay) {
+// SECTION: Radar Chart for Daily Breakdown - Fixed to show users on axis
+async function showRadarChart(date, users, dates) {
     const radarContainer = document.getElementById('radar-chart-container');
     const radarCanvas = document.getElementById('radar-chart');
     
     radarContainer.style.display = 'block';
     document.getElementById('radar-date').textContent = date;
     
-    const dayData = aggregatedDatabyDay.find(d => d.date === date);
-    if (!dayData) return;
-    
     if (radarChartInstance) {
         radarChartInstance.destroy();
     }
+    
+    // Get revenue data for all users for this specific date
+    const userRevenuePromises = users.map(async (user) => {
+        const revenueByDate = await getRevenueByDateForUser(user.id, dates);
+        return {
+            userId: user.id,
+            userName: `${user.first_name} ${user.last_name}`,
+            revenue: revenueByDate[date]
+        };
+    });
+    
+    const userRevenueData = await Promise.all(userRevenuePromises);
+    
+    // Create datasets for each revenue type
+    const datasets = [
+        {
+            label: 'Packages',
+            data: userRevenueData.map(u => u.revenue.packages),
+            backgroundColor: 'rgba(99, 102, 241, 0.2)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+        },
+        {
+            label: 'Emails',
+            data: userRevenueData.map(u => u.revenue.emails),
+            backgroundColor: 'rgba(251, 191, 36, 0.2)',
+            borderColor: 'rgba(251, 191, 36, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(251, 191, 36, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(251, 191, 36, 1)'
+        },
+        {
+            label: 'Chats',
+            data: userRevenueData.map(u => u.revenue.chats),
+            backgroundColor: 'rgba(20, 184, 166, 0.2)',
+            borderColor: 'rgba(20, 184, 166, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(20, 184, 166, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(20, 184, 166, 1)'
+        },
+        {
+            label: 'Calls',
+            data: userRevenueData.map(u => u.revenue.calls),
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(239, 68, 68, 1)'
+        }
+    ];
     
     const ctx = radarCanvas.getContext('2d');
     radarChartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['a','b'], //FIXME Axis should be users and colors should be labels 
-            datasets: [{
-                label: 'Revenue by Type',
-                data: [
-                    dayData.packages,
-                    dayData.emails,
-                    dayData.chats,
-                    dayData.calls
-                ],
-                // FIXME add colors from styles.css
-                // backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                // borderColor: 'rgba(54, 162, 235, 1)',
-                // borderWidth: 2,
-                // pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                // pointBorderColor: '#fff',
-                // pointHoverBackgroundColor: '#fff',
-                // pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
-            }]
+            labels: userRevenueData.map(u => u.userName),
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -312,16 +352,17 @@ async function showRadarChart(date, aggregatedDatabyDay) {
             },
             plugins: {
                 legend: {
-                    display: true
+                    display: true,
+                    position: 'bottom'
                 },
                 title: {
                     display: true,
-                    text: 'Revenue Breakdown by Type'
+                    text: 'Revenue Breakdown by User and Type'
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.label + ': $' + context.parsed.r.toFixed(2);
+                            return context.dataset.label + ': $' + context.parsed.r.toFixed(2);
                         }
                     }
                 }
@@ -372,6 +413,8 @@ async function renderMainClientChart(users, dates) {
             datasets: [{
                 label: 'Total Revenue',
                 data: totalRevenueByDate,
+                borderColor: 'rgba(99, 102, 241, 1)',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
                 borderWidth: 3,
                 tension: 0.4,
                 pointRadius: 4,
@@ -385,11 +428,11 @@ async function renderMainClientChart(users, dates) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            onClick: (event, activeElements) => {
+            onClick: async (event, activeElements) => {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedDate = dates[index];
-                    showRadarChart(clickedDate, aggregatedDatabyDay);
+                    await showRadarChart(clickedDate, users, dates);
                 }
             },
             scales: {
@@ -459,7 +502,7 @@ async function loadUsers() {
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
-        ); //NOTE - will need to change after database update maybe?
+        );
         console.log("Users loaded:", users);
 
         if (users.length === 0) {

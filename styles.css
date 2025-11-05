@@ -1,138 +1,165 @@
 /* SECTION Light Colors */
 :root{
-    /* TODO: ADD Light Root colors */
-    /* Backgrounds */
-    --bg: #FFFFF;
-    /* panel gradient background */
-    --bg-plugin-gradient: linear-gradient(to bottom, #6565f4, #141421);
-    /* panels / cards */
-    --bg-c2ai-border-gradient: linear-gradient(to bottom right, #008387, 70%, #00124a);
-    /* c2ai border; requires a ::before and absolute postioning with a zindex of -1 at 0 top, left, bottom, right and content:'';  */
-    --panel-shadow: 0rem 0.2rem 0.2rem rgba(0, 0, 0, 0.07);
-    --modal-footer-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
-    --modal-header-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
+    
+  /* Backgrounds */
+  --bg: #ffffff;
+  /* main background */
+  --bg-plugin-gradient: linear-gradient(to bottom, #ffffff, #f5f5f5);
+  /*panel gradient background */
+  --bg-c2ai-border-gradient: linear-gradient(to bottom right, #46c2c6, 70%, #2563eb);
+  --panel-shadow: 0rem 0.2rem 0.2rem rgba(0, 0, 0, 0.07);
+  /* subtle soft shadow for light mode */
+  --modal-footer-shadow: 0rem 0rem 1rem rgba(0, 0, 0, 0.2);
+  --modal-header-shadow: 0rem 0rem 1rem rgba(0, 0, 0, 0.2);
 
-    /* Text */
-    --text: black;
-    /* primary text */
-    --text-muted: #9ca3af;
-    /* secondary text */
-    --text-placeholders: #545a82;
-    /* input hints, placeholders */
-    --pending-text: #ffb70b;
-    /* warning text */
-    --menu-text: black;
-    /* menu text */
+  /* Text */
+  --text: #2a3142;
+  /* primary text */
+  --text-muted: #6b7280;
+  /* secondary text */
+  --text-placeholders: #9ca3af;
+  /* input hints, placeholders */
+  --warning-text: #b45309;
+  /* warning text */
+  --menu-text: #ffffff;
+  /* menu text */
 
-    /* Borders / Dividers */
-    --border: #141421;
+  /* Borders / Dividers */
+  --border: #d1d5db;
 
-    /* Primary Accent */
-    --primary: #00356f;
-    /* main CTA (blue button) */
+  /* Primary Accent */
+  --primary: #00356f;
+  /* keep same brand accent */
 
-    /* Secondary Accent */
-    --secondary: #008387;
-    /* main CTA (blue button) */
+  /* Secondary Accent */
+  --secondary: #008387;
+  /* keep same brand accent */
 
-    /* Nav Button Highlights */
-    --nav-active-background: #0a1330;
-    /* active nav item highlight main */
-    --nav-active-left-trim: #0467d2;
-    /* active nav item highlight left border trim */
+  /* Nav Button Highlights */
+  --nav-active-background: #e5ecf9;
+  /* subtle light highlight */
+  --nav-active-left-trim: #0467d2;
+  /* keep brand blue trim */
+  /* Status Colors (Light Theme) */
+  --success: #008387;
+  /* keep same brand teal for continuity */
+  --failed: #dc2626;
+  /* slightly brighter red for light bg */
+  --info: #2563eb;
+  /* deeper blue for readability */
+  --active: #00356f;
+  /* same brand navy, contrasts well on white */
+  --inactive: #e5e7eb;
+  /* light gray to look disabled on white */
+  --pending: #f59e0b;
+  /* brighter amber for visibility */
 
-    /* Status Colors */
-    --success: #008387;
-    /* success */
-    --failed: #dc3545;
-    /* failed */
-    --info: #3b82f6;
-    /* links / highlights */
-    --active: #00356f;
-    /* active elements */
-    --inactive: #2e3045;
-    /* inactive elements */
-    --pending: #008387;
-    /* pending */
+  /* Buttons & Inputs */
+  --primary-btn-bg: #00356f;
+  --primary-btn-onhover: #008387;
+  --secondary-btn-bg: #f3f4f6;
+  --secondary-btn-onhover-border: #0467d2;
+  --input-bg: #2a3142;
+  --input-active-bg: #0a1330;
+  --input-active-border: #0467d2;
+  --active-box-shadow: 0 0 0 0.2rem #0467d280;
 
-    /* Buttons & Inputs */
-    --primary-btn-bg: #00356f;
-    --primary-btn-onhover: #008387;
-    --secondary-btn-bg: #0a1330;
-    --secondary-btn-onhover-border: #0467d2;
-    --input-bg: #2e3045;
-    --input-active-bg: #0a1330;
-    --input-active-border: #0467d2;
-    --active-box-shadow: 0 0 0 0.2rem #0467d280;
-    --dropdown-item-hover: #545a82;}
+  /* Chart Colors */
+  --grid-color: #d1d5db;
+
+  /* Dark Contrast Input BG Icon */
+  --svg-icon-filter: brightness(0) saturate(100%) invert(15%) sepia(18%) saturate(1126%) hue-rotate(185deg) brightness(92%) contrast(86%);
+
+  /* White SVG Menu Icon Filter */
+  --svg-icon-menu-filter: brightness(0) saturate(100%) invert(92%) sepia(100%) saturate(2%) hue-rotate(111deg) brightness(106%) contrast(100%);
+
+  /* Secondary Icon Hover Filter */
+  --svg-icon-secondary-hover-filter: brightness(0) saturate(100%) invert(26%) sepia(47%) saturate(4084%) hue-rotate(165deg) brightness(95%) contrast(106%);
+}
 /* !SECTION */
 
 /* SECTION DARK  */
 @media (prefers-color-scheme: dark){
     :root {
-    /* Backgrounds */
-    --bg: #141421;
-    /* panel gradient background */
-    --bg-plugin-gradient: linear-gradient(to bottom, #1a1a2e, #141421);
-    /* panels / cards */
-    --bg-c2ai-border-gradient: linear-gradient(to bottom right, #008387, 70%, #00124a);
-    /* c2ai border; requires a ::before and absolute postioning with a zindex of -1 at 0 top, left, bottom, right and content:'';  */
-    --panel-shadow: 0rem 0.2rem 0.2rem rgba(0, 0, 0, 0.07);
-    --modal-footer-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
-    --modal-header-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
+         /* Backgrounds */
+        --bg: #141421;
+        /* panel gradient background */
+        --bg-plugin-gradient: linear-gradient(to bottom, #1a1a2e, #141421);
+        /* panels / cards */
+        --bg-c2ai-border-gradient: linear-gradient(to bottom right, #008387, 70%, #00124a);
+        /* c2ai border; requires a ::before and absolute postioning with a zindex of -1 at 0 top, left, bottom, right and content:'';  */
+        --panel-shadow: 0rem 0.2rem 0.2rem rgba(0, 0, 0, 0.07);
+        --modal-footer-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
+        --modal-header-shadow: 0rem 0rem 1rem rgba(0, 53, 111, 0.8);
 
-    /* Text */
-    --text: #ffffff;
-    /* primary text */
-    --text-muted: #9ca3af;
-    /* secondary text */
-    --text-placeholders: #545a82;
-    /* input hints, placeholders */
-    --pending-text: #ffb70b;
-    /* warning text */
-    --menu-text: #ffffff;
-    /* menu text */
+        /* Text */
+        --text: #ffffff;
+        /* primary text */
+        --text-muted: #9ca3af;
+        /* secondary text */
+        --text-placeholders: #545a82;
+        /* input hints, placeholders */
+        --pending-text: #ffb70b;
+        /* warning text */
+        --menu-text: #ffffff;
+        /* menu text */
 
-    /* Borders / Dividers */
-    --border: #141421;
+        /* Borders / Dividers */
+        --border: #141421;
 
-    /* Primary Accent */
-    --primary: #00356f;
-    /* main CTA (blue button) */
+        /* Primary Accent */
+        --primary: #00356f;
+        /* main CTA (blue button) */
 
-    /* Secondary Accent */
-    --secondary: #008387;
-    /* main CTA (blue button) */
+        /* Secondary Accent */
+        --secondary: #008387;
 
-    /* Nav Button Highlights */
-    --nav-active-background: #0a1330;
-    /* active nav item highlight main */
-    --nav-active-left-trim: #0467d2;
-    /* active nav item highlight left border trim */
+        /* Secondary Accent */
+        --offset: #f15722;
 
-    /* Status Colors */
-    --success: #008387;
-    /* success */
-    --failed: #dc3545;
-    /* failed */
-    --info: #3b82f6;
-    /* links / highlights */
-    --active: #00356f;
-    /* active elements */
-    --inactive: #2e3045;
-    /* inactive elements */
-    --pending: #008387;
-    /* pending */
+        /* Nav Button Highlights */
+        --nav-active-background: #0a1330;
+        /* active nav item highlight main */
+        --nav-active-left-trim: #0467d2;
+        /* active nav item highlight left border trim */
 
-    /* Buttons & Inputs */
-    --primary-btn-bg: #00356f;
-    --primary-btn-onhover: #008387;
-    --secondary-btn-bg: #0a1330;
-    --secondary-btn-onhover-border: #0467d2;
-    --input-bg: #2e3045;
-    --input-active-bg: #0a1330;
-    --input-active-border: #0467d2;
-    --active-box-shadow: 0 0 0 0.2rem #0467d280;
-    --dropdown-item-hover: #545a82;}
+        /* Status Colors */
+        --success: #008387;
+        /* success */
+        --failed: #dc3545;
+        /* failed */
+        --info: #3b82f6;
+        /* links / highlights */
+        --active: #00356f;
+        /* active elements */
+        --inactive: #2e3045;
+        /* inactive elements */
+        --pending: #008387;
+        /* pending */
+
+        /* Buttons & Inputs */
+        --primary-btn-bg: #00356f;
+        --primary-btn-onhover: #008387;
+        --secondary-btn-bg: #0a1330;
+        --secondary-btn-onhover-border: #0467d2;
+        --input-bg: #2e3045;
+        --input-active-bg: #0a1330;
+        --input-active-border: #0467d2;
+        --active-box-shadow: 0 0 0 0.2rem #0467d280;
+        --dropdown-item-hover: #545a82;
+
+        /* Chart Colors */
+        --grid-color: #141421;
+
+
+        /* Light Contrast Input BG Icon */
+        --svg-icon-filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(128deg) brightness(102%) contrast(101%);
+
+        /* Dark SVG Menu Icon Filter */
+        --svg-icon-menu-filter: brightness(0) saturate(100%) invert(92%) sepia(100%) saturate(2%) hue-rotate(111deg) brightness(106%) contrast(100%);
+
+        /* Secondary Icon Hover Filter */
+        --svg-icon-secondary-hover-filter: brightness(0) saturate(100%) invert(26%) sepia(47%) saturate(4084%) hue-rotate(165deg) brightness(95%) contrast(106%);
+    }
 }
 /* !SECTION */
