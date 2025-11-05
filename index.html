@@ -29,7 +29,7 @@
                 <input type="date" id="start-date" name="start-date">
                 <label for="end-date">End Date:</label>
                 <input type="date" id="end-date" name="end-date">
-                <label type="date-type">Select Date timeframe type:</label> <!--FIXME - have the main visual change accoring to this. also the radar whould change according to this -->
+                <label type="date-type" for="date-type">Group by:</label> <!--FIXME - have the main visual change accoring to this. also the radar whould change according to this -->
                 <select name="date-type" id="date-type">
                     <option value=1 selected>Daily</option> <!--NOTE - the value is the number of days being aggregated together into a single point -->
                     <option value=7>Weekly</option>
@@ -138,7 +138,7 @@
 
            <!-- SECTION: Daily Revenue Chart -->
             <div id="radar-chart-container" class="card chart-reserved" style="display: none;">
-                <h3>Daily Revenue Breakdown for <span id="radar-date"></span></h3>
+                <h3>Daily Revenue Breakdown for <span id="radar-date"></span></h3> <!--FIXME no radardate-->
                 <div class="chart-container radar-container">
                     <canvas id="radar-chart"></canvas>
                 </div>

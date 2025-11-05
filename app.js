@@ -262,31 +262,52 @@ async function getTotalRevenueForUser(userId, dates) {
 //!SECTION
 
 // SECTION: Radar Chart for Daily Breakdown - Fixed to show users on axis
-async function showRadarChart(date, users, dates) {
+async function showRadarChart(period,users) {
     const radarContainer = document.getElementById('radar-chart-container');
     const radarCanvas = document.getElementById('radar-chart');
+    const datesInPeriod = period.datesInPeriod;
+    
+    const dateDisplay = datesInPeriod > 1 ? '${datesInPeriod[0]} to  ${datesInPeriod[-1]}' :period.label;
     
     radarContainer.style.display = 'block';
-    document.getElementById('radar-date').textContent = date;
+    document.getElementById('radar-date').textContent = dateDisplay;
     
+    //if chart exists remove it
     if (radarChartInstance) {
         radarChartInstance.destroy();
     }
     
-    // Get revenue data for all users for this specific date
+    //get date range
+    const allDatesInCurrentRange = getDatesInRange(currentStartDate,currentEndDate);
+
+
+    // Get revenue data for period
     const userRevenuePromises = users.map(async (user) => {
-        const revenueByDate = await getRevenueByDateForUser(user.id, dates);
+        const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange);
+        let aggregatedRevenue = {packages:0,emails:0,chats:0,calls:0};//start out with everything at 0
+        //sum everything
+        datesInPeriod.forEach(date =>{
+            const dayRevenue=revenueByDate[date];
+            if(dayRevenue){
+                aggregatedRevenue.packages+=dayRevenue.packages;
+                aggregatedRevenue.emails+=dayRevenue.emails;
+                aggregatedRevenue.chats+=dayRevenue.chats;
+                aggregatedRevenue.calls+=dayRevenue.calls;
+            }
+        })
         return {
             userId: user.id,
             userName: `${user.first_name} ${user.last_name}`,
-            revenue: revenueByDate[date]
+            revenue: aggregatedRevenue
         };
     });
     
     const userRevenueData = await Promise.all(userRevenuePromises);
+    console.log('user revenue data below');
+    console.log(userRevenueData);
     
     // Create datasets for each revenue type
-    const datasets = [
+    const datasets = [ //FIXME this section needs styling from styles.css
         {
             label: 'Packages',
             data: userRevenueData.map(u => u.revenue.packages),
@@ -332,7 +353,8 @@ async function showRadarChart(date, users, dates) {
             pointHoverBorderColor: 'rgba(239, 68, 68, 1)'
         }
     ];
-    
+    console.log('radar datanxt');
+    console.log(datasets);
     const ctx = radarCanvas.getContext('2d');
     radarChartInstance = new Chart(ctx, {
         type: 'radar',
@@ -529,8 +551,7 @@ async function renderMainClientChart(users, dates, dateType) {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedPeriod = aggregatedData[index];
-                    const clickedDateForRadar = clickedPeriod.datesInPeriod[0]; //Radar needs a single date
-                    await showRadarChart(clickedDateForRadar, users, dates, dateType);
+                    await showRadarChart(clickedPeriod,users);
                 }
             },
             scales: {
@@ -876,6 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     currentEndDate = formatDate(today);
     currentStartDate = formatDate(lastSunday);
+    currentDateType ='1';
     
     startDateInput.value = currentStartDate;
     endDateInput.value = currentEndDate;
