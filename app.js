@@ -300,7 +300,7 @@ async function showRadarChart(period,users) {
     // Get revenue data for period
     const userRevenuePromises = users.map(async (user) => {
         const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange);
-        let aggregatedRevenue = {emails:0,chats:0,calls:0};//start out with everything at 0
+        let aggregatedRevenue = {packages:0,emails:0,chats:0,calls:0};//start out with everything at 0
         //sum everything
         datesInPeriod.forEach(date =>{
             const dayRevenue=revenueByDate[date];
