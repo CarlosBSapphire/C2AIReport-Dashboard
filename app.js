@@ -8,6 +8,7 @@ let radarChartInstance = null; // For daily revenue radar chart
 let currentUser = null;
 let currentStartDate = null;
 let currentEndDate = null;
+let currentDateType = null;
 //!SECTION
 
 // SECTION - PHP-based session cache
@@ -762,9 +763,10 @@ function switchTab(tabName) {
 document.addEventListener('DOMContentLoaded', () => {
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
+    const currentDateTypeInput = document.getElementById("date-type");
     const loadButton = document.getElementById("load-users");
     
-    // Set default dates
+    // Set default dates & type
     const today = new Date();
     const lastSunday = getLastSunday();
     
@@ -773,7 +775,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     startDateInput.value = currentStartDate;
     endDateInput.value = currentEndDate;
-    
+    currentDateTypeInput.value = currentDateType;
+
     // Date change handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
@@ -784,12 +787,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEndDate = e.target.value;
         sessionCache.clear(); // Clear cache on date change
     });
+
+    currentDateTypeInput.addEventListener('change',(e)=>{
+        currentDateType=e.target.value;
+        sessionCache.clear();
+    });
     
     // Load button handler
     loadButton.addEventListener('click', () => {
         sessionCache.clear(); // Clear cache on manual reload
         loadUsers();
-        document.getElementById('user-detail-view').style.display = 'none';
+        document.getElementById('user-detail-view').style.display = 'none'; 
         document.getElementById('radar-chart-container').style.display = 'none';
     });
     
