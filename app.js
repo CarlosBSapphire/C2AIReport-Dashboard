@@ -16,7 +16,7 @@
  * ----------------------
  * 1. Data Fetching: Retrieves data from API endpoint with session caching
  * 2. Revenue Calculation: Aggregates revenue across multiple service types
- * 3. Visualization: Displays data using Chart.js (line, bar, radar charts)
+ * 3. Visualization: Displays data using Chart.js 
  * 4. User Interaction: Provides drill-down capabilities for detailed analysis
  * 
  * DATA FLOW:
@@ -58,7 +58,7 @@ let mainChartInstance = null;
  * Chart instance for radar breakdown visualization
  * @type {Chart|null}
  */
-let radarChartInstance = null;
+let radarChartInstance = null; //FIXME make this a bubble chart
 
 /**
  * Currently selected user object
@@ -616,6 +616,7 @@ const chartColors = {
 
 // ============================================================================
 // SECTION: Radar Chart for Revenue Breakdown
+//FIXME - !!!!!!!!!! MAKE THIS A BUBBLE CHART with the x axis as dates, the y axis as users, the colors as types or revenue, and the radius of the bubles as the revenue from that datapoint
 // ============================================================================
 
 /**
@@ -631,7 +632,7 @@ const chartColors = {
  * @param {string[]} period.datesInPeriod - Array of dates in the period
  * @param {string} period.label - Display label for the period
  * @param {Array<Object>} users - Array of user objects
- * @returns {Promise<void>}
+ * @returns {Promise<void>} - basically just so it has a return
  * REVIEW if we add more packages or services then this needs to mannualy created
  * @example
  * await showRadarChart(
@@ -1009,38 +1010,22 @@ async function renderMainClientChart(users, dates, dateType) {
         data: {
             labels: chartLabels,
             datasets: datasets,
-                trendlineLinear: {
-                    
-                    lineStyle: "solid",
-                    width: 2
+            trendlineLinear: {
+                lineStyle: "dotted",//REVIEW just to see if this is a diffrent line
+                width: 2
                 }
             }
         },
-        // const datasets = [
-        //     {
-        //         label: 'Emails',
-        //         data: labels.map(date => parseFloat(revenueByDate[date].emails.toFixed(2))),
-        //         backgroundColor: chartColors.emails.border
-        //     },
-        //     {
-        //         label: 'Chats',
-        //         data: labels.map(date => parseFloat(revenueByDate[date].chats.toFixed(2))),
-        //         backgroundColor: chartColors.chats.border
-        //     },
-        //     {
-        //         label: 'Calls',
-        //         data: labels.map(date => parseFloat(revenueByDate[date].calls.toFixed(2))),
-        //         backgroundColor: chartColors.packages.border
-        //     }
+        
         options: {
             responsive: true,
             maintainAspectRatio: true,
             onClick: async (event, activeElements) => {
-                // Click handler: show radar chart for clicked period
+                // Click handler: show bubble chart for clicked period
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedPeriod = aggregatedData[index];
-                    await showRadarChart(clickedPeriod, users);
+                    await showRadarChart(clickedPeriod, users); //FIXME - make this a bubble chart
                 }
             },
             scales: {
@@ -1495,7 +1480,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUsers();
         // Hide detail views on reload
         document.getElementById('user-detail-view').style.display = 'none'; 
-        document.getElementById('radar-chart-container').style.display = 'none';
+        document.getElementById('radar-chart-container').style.display = 'none'; //FIXME - make this a bubblechart
     });
 
     // Tab navigation handlers
