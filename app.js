@@ -195,10 +195,25 @@ async function getRevenueByDateForUser(userId, dates) {
 
     // Calculate daily package cost
     //FIXME there is often multiple packages and thus multiple entries uner the same user
-    const weeklyPackageCost = packages.reduce((sum, pkg) => sum + (parseFloat(pkg.cost) || 0), 0);
-    const dailyPackageCost = weeklyPackageCost / 7;
+    let totalPackageCostByDay = 0;
+    packages.forEach(pkg =>{
+        let PackageCost
+        let dailyPackageCost = 0;
+        if(pkg.frequency == 'Weekly'){
+            PackageCost = packages.reduce((sum, pkg) => sum + (parseFloat(pkg.cost) || 0), 0);
+            dailyPackageCost = PackageCost/7;
+        }
+        if(pkg.frequency == 'Monthly'){
+            PackageCost = packages.reduce((sum, pkg) => sum + (parseFloat(pkg.cost) || 0), 0);
+            dailyPackageCost = PackageCost/30.5;
+        } //REVIEW - are there options besides weekly and monthly?
+        totalPackageCostByDay += dailyPackageCost;
+    })
+
+    // const weeklyPackageCost = packages.reduce((sum, pkg) => sum + (parseFloat(pkg.cost) || 0), 0);
+    // const dailyPackageCost = weeklyPackageCost / 7;
     dates.forEach(date => {
-        revenueByDate[date].packages = dailyPackageCost;
+        revenueByDate[date].packages = totalPackageCostByDay;
     });
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -290,6 +305,7 @@ async function showRadarChart(period,users) {
         datesInPeriod.forEach(date =>{
             const dayRevenue=revenueByDate[date];
             if(dayRevenue){
+                aggregatedRevenue.packages+=dayRevenue.packages;
                 aggregatedRevenue.emails+=dayRevenue.emails;
                 aggregatedRevenue.chats+=dayRevenue.chats;
                 aggregatedRevenue.calls+=dayRevenue.calls;
@@ -308,6 +324,17 @@ async function showRadarChart(period,users) {
     
     // Create datasets for each revenue type
     const datasets = [ //FIXME this section needs styling from styles.css
+        {
+            label: 'Packages',
+            data: userRevenueData.map(u => u.revenue.packages),
+            backgroundColor: 'rgba(99, 102, 241, 0.2)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 2,
+            pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+        },
         {
             label: 'Emails',
             data: userRevenueData.map(u => u.revenue.emails),
