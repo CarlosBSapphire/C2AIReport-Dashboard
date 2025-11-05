@@ -12,12 +12,25 @@
         <script type="module" src="app.js"></script>
     </head>
     <body>
-        <!-- SECTION Tab Navigation -->
-        <div class="tab-navigation">
-            <button id="clients-tab" class="tab-button active">Clients</button>
-            <button id="commissions-tab" class="tab-button">Commissions</button>
+        <!--SECTION Headder-->
+        <header>
+            <h1>C2AI</h1>
+            <!--TODO add logo?-->
+            <div class="'company-buttons">
+                <button id="companyname-button" class="btn-primary" value="company" commandfor="changeCompany" command="setcompany('companyname')">Company name here</button> <!--TODO:you will also need to create thejs to change the company -->
+            </div>
+        </header>
+        <!--!SECTION -->
+        
+        <!--SECTION sidebar-->
+        <div class = "sidebar">
+        
+            <div class="tab-navigation">
+                <button id="clients-tab" class="tab-button active">Clients</button>
+                <button id="commissions-tab" class="tab-button">Commissions</button>
+            </div>
         </div>
-        <!-- !SECTION -->
+        <!--SECTION-->
 
         <!-- SECTION Clients Tab -->
         <div id="clients-content" class="tab-content">
