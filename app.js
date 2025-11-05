@@ -300,6 +300,7 @@ async function fetchData(tableName, columns, filters = {}) {
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
         };
+        // REVIEW if we add more packages or services then this needs to mannualy created
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
@@ -407,6 +408,7 @@ async function getPackageStatsForUser(userId) {
  * @returns {number} .[date].emails - Email revenue
  * @returns {number} .[date].chats - Chat revenue
  * @returns {number} .[date].calls - Call revenue
+ * REVIEW if we add more packages or services then this needs to mannualy created
  * 
  * @example
  * const revenue = await getRevenueByDateForUser(123, ['2024-01-01', '2024-01-02']);
@@ -420,6 +422,7 @@ async function getRevenueByDateForUser(userId, dates) {
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
     ]);
+    // REVIEW if we add more packages or services then this needs to mannualy created
 
     // Initialize revenue structure for all dates
     const revenueByDate = {};
@@ -429,7 +432,7 @@ async function getRevenueByDateForUser(userId, dates) {
             emails: 0,
             chats: 0,
             calls: 0
-        };
+        }; // REVIEW if we add more packages or services then this needs to mannualy created
     });
 
     // Calculate daily package cost (prorated from weekly/monthly)
@@ -509,7 +512,7 @@ async function getRevenueByDateForUser(userId, dates) {
             }
         });
     });
-
+    // REVIEW if we add more packages or services then this needs to mannualy created
     return revenueByDate;
 }
 
@@ -606,6 +609,7 @@ const chartColors = {
         get border() { return getCSSVariable('--info'); },
         get point() { return getCSSVariable('--info'); }
     }
+    // REVIEW if we add more packages or services then this needs to mannualy created
 };
 
 //!SECTION
@@ -628,7 +632,7 @@ const chartColors = {
  * @param {string} period.label - Display label for the period
  * @param {Array<Object>} users - Array of user objects
  * @returns {Promise<void>}
- * 
+ * REVIEW if we add more packages or services then this needs to mannualy created
  * @example
  * await showRadarChart(
  *   { datesInPeriod: ['2024-01-01'], label: '2024-01-01' },
@@ -659,7 +663,7 @@ async function showRadarChart(period, users) {
     // Calculate revenue for each user in the period
     const userRevenuePromises = users.map(async (user) => {
         const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange);
-        let aggregatedRevenue = { packages: 0, emails: 0, chats: 0, calls: 0 };
+        let aggregatedRevenue = { packages: 0, emails: 0, chats: 0, calls: 0 }; // REVIEW if we add more packages or services then this needs to mannualy created
         
         // Sum revenue across all dates in the period
         datesInPeriod.forEach(date => {
@@ -669,7 +673,7 @@ async function showRadarChart(period, users) {
                 aggregatedRevenue.emails += dayRevenue.emails;
                 aggregatedRevenue.chats += dayRevenue.chats;
                 aggregatedRevenue.calls += dayRevenue.calls;
-            }
+            }// REVIEW if we add more packages or services then this needs to mannualy created
         });
         
         return {
@@ -728,6 +732,7 @@ async function showRadarChart(period, users) {
             pointHoverBackgroundColor: '#fff',
             pointHoverBorderColor: chartColors.calls.border
         }
+        // REVIEW if we add more packages or services then this needs to mannualy created
     ];
     
     console.log('Radar chart datasets:', datasets);
@@ -794,6 +799,7 @@ async function showRadarChart(period, users) {
  * @param {number} aggregatedDatabyDay[].emails - Email revenue
  * @param {number} aggregatedDatabyDay[].chats - Chat revenue
  * @param {number} aggregatedDatabyDay[].calls - Call revenue
+ * REVIEW if we add more packages or services then this needs to mannualy created
  * @param {string} dateType - Aggregation type ('1', '7', or '30')
  * @returns {Array<Object>} Aggregated data by period
  * @returns {string} [].label - Period label for display
@@ -802,6 +808,7 @@ async function showRadarChart(period, users) {
  * @returns {number} [].emails - Aggregated email revenue
  * @returns {number} [].chats - Aggregated chat revenue
  * @returns {number} [].calls - Aggregated call revenue
+ * REVIEW if we add more packages or services then this needs to mannualy created
  * @returns {string[]} [].datesInPeriod - Array of dates included in period
  * 
  * @example
