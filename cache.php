@@ -16,8 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Initialize cache in session if not exists
-if (!isset($_SESSION['cache'])) {
+if (!isset($_SESSION['cache']) && !empty($_SESSION['cache'])) {
     $_SESSION['cache'] = [];
+    $timestamp = time();
+    $cached['timestamp'] = gmdate('Y-m-d', $timestamp);
+    
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -35,7 +38,7 @@ switch ($method) {
             exit();
         }
         
-        if (isset($_SESSION['cache'][$key])) {
+        if (isset($_SESSION['cache'][$key]) && !empty($_SESSION['cache'][$key])) {
             $cached = $_SESSION['cache'][$key];
             $age = (time() * 1000) - $cached['timestamp'];
             
