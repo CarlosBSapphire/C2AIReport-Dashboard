@@ -116,6 +116,8 @@ async function fetchData(tableName, columns, filters = {}) {
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
+            //NOTE - dates need to be adjusted to count in the filter
+            
             enhancedFilters[`${dateColumn}_after`] = currentStartDate;
             enhancedFilters[`${dateColumn}_before`] = currentEndDate;
         }
@@ -373,8 +375,96 @@ async function showRadarChart(date, users, dates) {
 }
 //!SECTION
 
+//SECTION - sunction to aggregate data by period
+function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
+        const type = parseInt(dateType);
+        
+        // Default to daily if not 7 or 30
+        if (type !== 7 && type !== 30) { 
+            return aggregatedDatabyDay.map(d => ({
+                label: d.date,
+                total: d.total,
+                packages: d.packages,
+                emails: d.emails,
+                chats: d.chats,
+                calls: d.calls,
+                datesInPeriod: [d.date] // Daily period is just the single date
+            }));
+        }
+
+        const aggregated = {};
+
+        aggregatedDatabyDay.forEach(day => {
+            const dateObj = new Date(day.date);
+            let key = day.date; 
+
+            if (type === 7) { // Weekly
+                // Calculate the Sunday (start of the week) for the period key
+                const dayOfWeek = dateObj.getDay(); // 0 is Sunday, 6 is Saturday
+                const weekStart = new Date(dateObj);
+                weekStart.setDate(dateObj.getDate() - dayOfWeek);
+                key = formatDate(weekStart); 
+            } else if (type === 30) { // Monthly
+                // Use YYYY-MM as the key
+                key = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0');
+            }
+
+            if (!aggregated[key]) {
+                aggregated[key] = {
+                    label: key,
+                    total: 0,
+                    packages: 0,
+                    emails: 0,
+                    chats: 0,
+                    calls: 0,
+                    datesInPeriod: [] 
+                };
+            }
+
+            aggregated[key].total += day.total;
+            aggregated[key].packages += day.packages;
+            aggregated[key].emails += day.emails;
+            aggregated[key].chats += day.chats;
+            aggregated[key].calls += day.calls;
+            aggregated[key].datesInPeriod.push(day.date);
+        });
+
+        //console check
+        console.log(aggregated);
+        // Final formatting and sorting
+        return Object.values(aggregated).map(d => {
+            d.datesInPeriod.sort(); // Sort dates chronologically for range display
+            
+            // Update label for display
+            const displayLabel = (type === 7) 
+                ? `Week of ${d.datesInPeriod[0]}` 
+                : (type === 30) 
+                    ? d.label 
+                    : d.label;
+                    
+            return {
+                label: displayLabel,
+                total: parseFloat(d.total.toFixed(2)),
+                packages: parseFloat(d.packages.toFixed(2)),
+                emails: parseFloat(d.emails.toFixed(2)),
+                chats: parseFloat(d.chats.toFixed(2)),
+                calls: parseFloat(d.calls.toFixed(2)),
+                datesInPeriod: d.datesInPeriod
+            };
+        }).sort((a, b) => {
+            // Sort by the earliest date in the period for correct chronological order
+            const dateA = new Date(a.datesInPeriod[0] || a.label);
+            const dateB = new Date(b.datesInPeriod[0] || b.label);
+            return dateA.getTime() - dateB.getTime();
+        });
+    }
+//!SECTION
+
+
+
 // SECTION: Main Chart Rendering - Line Graph by Date
-async function renderMainClientChart(users, dates) {
+//TODO: add funtion documentation
+async function renderMainClientChart(users, dates, dateType) {
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
     
     if (mainChartInstance) {
@@ -385,7 +475,9 @@ async function renderMainClientChart(users, dates) {
     const revenuePromises = users.map(user => getRevenueByDateForUser(user.id, dates));
     const userRevenueByDate = await Promise.all(revenuePromises);
 
-    // Aggregate total revenue by date and category across all users
+    // Aggregate revenue by date and category across users 
+    //NOTE THIS IS NEEDED REGARDLESS OF DATE RANGE OR TYPE SO WE CAN AGGREGATE DATES LATER
+    //LINK - #aggregateDataByPeriod
     const aggregatedDatabyDay = dates.map(date => {
         let packages = 0, emails = 0, chats = 0, calls = 0;
         userRevenueByDate.forEach(userRevenue => {
@@ -405,17 +497,21 @@ async function renderMainClientChart(users, dates) {
         };
     });
 
-    const totalRevenueByDate = aggregatedDatabyDay.map(d => d.total);
+    //Aggregate revenue by range 
+    const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay,dateType);
+
+    const chartLabels = aggregatedData.map(d=>d.label);
+    const chartTotals = aggregatedData.map(d=>d.total);
 
     mainChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: dates,
+            labels: chartLabels,
             datasets: [{
                 label: 'Total Revenue',
-                data: totalRevenueByDate,
-                borderColor: 'rgba(99, 102, 241, 1)',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                data: chartTotals,
+                borderColor: 'rgba(99, 102, 241, 1)', //FIXME - change to styles.css colors
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',//FIXME - change to styles.css colors
                 borderWidth: 3,
                 tension: 0.4,
                 pointRadius: 4,
@@ -432,8 +528,9 @@ async function renderMainClientChart(users, dates) {
             onClick: async (event, activeElements) => {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
-                    const clickedDate = dates[index];
-                    await showRadarChart(clickedDate, users, dates);
+                    const clickedPeriod = aggregatedData[index];
+                    const clickedDateForRadar = clickedPeriod.datesInPeriod[0]; //Radar needs a single date
+                    await showRadarChart(clickedDateForRadar, users, dates, dateType);
                 }
             },
             scales: {
@@ -462,15 +559,20 @@ async function renderMainClientChart(users, dates) {
             },
             plugins: {
                 legend: {
-                    display: false
+                    display: true
                 },
                 title: {
                     display: true,
-                    text: 'Total Daily Revenue (All Clients) - Click points to see breakdown'
+                    text: 'Total Revenue (All Clients) - Click points to see breakdown' 
                 },
                 tooltip: {
                     callbacks: {
                         title: function(context) {
+                            const index = context[0].dataIndex;
+                            const periodData = aggregatedData[index]; 
+                            if (periodData.datesInPeriod && periodData.datesInPeriod.length > 1) {
+                                return `Period: ${periodData.datesInPeriod[0]} to ${periodData.datesInPeriod[periodData.datesInPeriod.length - 1]}`;
+                            }
                             return 'Date: ' + context[0].label;
                         },
                         afterLabel: function(context) {
@@ -555,7 +657,7 @@ async function loadUsers() {
         });
         
         // Render the main chart with date range
-        await renderMainClientChart(usersWithStats, dates);
+        await renderMainClientChart(usersWithStats, dates, currentDateType);
 
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="6" class="error">Error loading users: ${error.message}</td></tr>`;
@@ -703,7 +805,7 @@ async function showUserDetail(user) {
                         cost: 0,
                         count: 0,
                         frequency: pkg.frequency || 'Weekly'
-                    };
+                    }; //REVIEW - update
                 }
                 packageAggregation[name].cost += parseFloat(pkg.cost) || 0;
                 packageAggregation[name].count += 1;
@@ -761,12 +863,14 @@ function switchTab(tabName) {
 
 // SECTION: Initialization and Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // //SECTION - Variables
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
     const currentDateTypeInput = document.getElementById("date-type");
     const loadButton = document.getElementById("load-users");
-    
-    // Set default dates & type
+    // //!SECTION
+
+    // SECTION - Set default dates & type
     const today = new Date();
     const lastSunday = getLastSunday();
     
@@ -776,8 +880,8 @@ document.addEventListener('DOMContentLoaded', () => {
     startDateInput.value = currentStartDate;
     endDateInput.value = currentEndDate;
     currentDateTypeInput.value = currentDateType;
-
-    // Date change handlers
+    //!SECTION
+    // SECTION - Date change handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
         sessionCache.clear(); // Clear cache on date change
@@ -792,16 +896,18 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDateType=e.target.value;
         sessionCache.clear();
     });
+    //!SECTION
     
-    // Load button handler
+    // SECTION - Load button handler
     loadButton.addEventListener('click', () => {
         sessionCache.clear(); // Clear cache on manual reload
         loadUsers();
         document.getElementById('user-detail-view').style.display = 'none'; 
         document.getElementById('radar-chart-container').style.display = 'none';
     });
-    
-    // Tab handlers
+    //!SECTION
+
+    // SECTION - Tab handlers
     const clientsTab = document.getElementById('clients-tab');
     const commissionsTab = document.getElementById('commissions-tab');
     
@@ -812,9 +918,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (commissionsTab) {
         commissionsTab.addEventListener('click', () => switchTab('commissions'));
     }
-
-    // Initialize
+    //!SECTION
+    // SECTION Initialize
     switchTab('clients');
     loadUsers();
 });
 //!SECTION
+//
