@@ -316,7 +316,6 @@ p {
     padding: 1.5rem;
     background: var(--bg-plugin-gradient);
     border-radius: 0.5rem;
-    border: 1px solid var(--border);
     margin-bottom: 2rem;
     box-shadow: var(--panel-shadow);
 }
