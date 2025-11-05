@@ -489,6 +489,7 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
 async function renderMainClientChart(users, dates, dateType) {
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
     
+    //clear out old chart
     if (mainChartInstance) {
         mainChartInstance.destroy();
     }
@@ -499,7 +500,7 @@ async function renderMainClientChart(users, dates, dateType) {
 
     // Aggregate revenue by date and category across users 
     //NOTE THIS IS NEEDED REGARDLESS OF DATE RANGE OR TYPE SO WE CAN AGGREGATE DATES LATER
-    //LINK - #aggregateDataByPeriod
+
     const aggregatedDatabyDay = dates.map(date => {
         let packages = 0, emails = 0, chats = 0, calls = 0;
         userRevenueByDate.forEach(userRevenue => {
@@ -598,7 +599,7 @@ async function renderMainClientChart(users, dates, dateType) {
                         },
                         afterLabel: function(context) {
                             const index = context.dataIndex;
-                            const data = aggregatedDatabyDay[index];
+                            const data = aggregatedData[index];
                             return [
                                 'Packages: $' + data.packages.toFixed(2),
                                 'Emails: $' + data.emails.toFixed(2),
