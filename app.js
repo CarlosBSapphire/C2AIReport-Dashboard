@@ -81,7 +81,7 @@ let currentEndDate = null;
 /**
  * Current date aggregation type
  * @type {string|null}
- * @values '1' = Daily, '7' = Weekly, '30' = Monthly
+ * @values '1' = Daily, '7' = Weekly, '30' = Monthly, '365' = Yearly
  */
 let currentDateType = null;
 
@@ -300,7 +300,7 @@ async function fetchData(tableName, columns, filters = {}) {
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
         };
-        // REVIEW if we add more packages or services then this needs to mannualy created
+        // REVIEW: If adding new service types, add their table names and date column mappings here
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
@@ -408,7 +408,7 @@ async function getPackageStatsForUser(userId) {
  * @returns {number} .[date].emails - Email revenue
  * @returns {number} .[date].chats - Chat revenue
  * @returns {number} .[date].calls - Call revenue
- * REVIEW if we add more packages or services then this needs to mannualy created
+ * REVIEW: If adding new service types, add new properties to the return object structure
  * 
  * @example
  * const revenue = await getRevenueByDateForUser(123, ['2024-01-01', '2024-01-02']);
@@ -422,7 +422,7 @@ async function getRevenueByDateForUser(userId, dates) {
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
     ]);
-    // REVIEW if we add more packages or services then this needs to mannualy created
+    // REVIEW: If adding new service types, add new fetchData calls here and include in Promise.all
 
     // Initialize revenue structure for all dates
     const revenueByDate = {};
@@ -736,7 +736,7 @@ async function showRadarChart(period, users) {
     ];
     
     console.log('Radar chart datasets:', datasets);
-    
+    //FIXME make this a stacked bar chart
     const ctx = radarCanvas.getContext('2d');
     radarChartInstance = new Chart(ctx, {
         type: 'radar',
@@ -919,6 +919,7 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
  * The chart aggregates data by the selected period (daily/weekly/monthly)
  * and displays total revenue across all users.
  * 
+ * FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
  * @async
  * @param {Array<Object>} users - Array of user objects with revenue data
  * @param {string[]} dates - Array of dates in the selected range
@@ -966,19 +967,20 @@ async function renderMainClientChart(users, dates, dateType) {
     const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay, dateType);
 
     const chartLabels = aggregatedData.map(d => d.label);
-    const chartTotals = aggregatedData.map(d => d.total);
+    const chartTotals = aggregatedData.map(d => d.total);//FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
 
     mainChartInstance = new Chart(ctx, {
-        type: 'line',
+        //FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
+        type: 'bar',
         data: {
             labels: chartLabels,
             datasets: [{
                 label: 'Total Revenue',
                 data: chartTotals,
-                // borderColor: chartColors.packages.border,
-                // backgroundColor: chartColors.packages.background,
+                //borderColor: getCSSVariable('--text'),
+                backgroundColor: getCSSVariable('--text'),
                 borderWidth: 3,
-                tension: 0.4,
+                // tension: 0.4, //NOTE - this is flor line charts
                 pointRadius: 4,
                 pointHoverRadius: 8,
                 trendlineLinear: {
@@ -1000,6 +1002,7 @@ async function renderMainClientChart(users, dates, dateType) {
             },
             scales: {
                 x: {
+                    stacked:true,
                     title: {
                         display: true,
                         text: 'Date'
@@ -1010,6 +1013,7 @@ async function renderMainClientChart(users, dates, dateType) {
                     }
                 },
                 y: {
+                    stacked:true,
                     beginAtZero: true,
                     title: {
                         display: true,
@@ -1441,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Date change event handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
-        sessionCache.clear(); // Clear cache when dates change
+        sessionCache.clear(); 
     });
     
     endDateInput.addEventListener('change', (e) => {
@@ -1456,7 +1460,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load button handler
     loadButton.addEventListener('click', () => {
-        sessionCache.clear(); // Clear cache on manual reload
+        sessionCache.clear(); 
         loadUsers();
         // Hide detail views on reload
         document.getElementById('user-detail-view').style.display = 'none'; 

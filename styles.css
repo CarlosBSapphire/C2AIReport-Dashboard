@@ -505,7 +505,7 @@ tbody td {
  */
 .card {
     background: var(--bg-plugin-gradient);
-    border: 1px solid var(--border);
+    /* border: 1px solid var(--border); */
     border-radius: 0.5rem;
     padding: 1.5rem;
     margin-bottom: 2rem;
