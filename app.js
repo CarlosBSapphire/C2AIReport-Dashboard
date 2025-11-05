@@ -581,7 +581,7 @@ async function renderMainClientChart(users, dates, dateType) {
             },
             plugins: {
                 legend: {
-                    display: true
+                    display: false //its ugly and there is only 1 line
                 },
                 title: {
                     display: true,
