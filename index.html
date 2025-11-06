@@ -21,7 +21,8 @@
                     <h1>Report Dashboard</h1>
                 </div>
                 <div class="company-buttons">
-                    <button id="companyname-button" class="btn-primary">Company Name</button>
+                    <button id="companyname-button" class="btn-primary">Look I am a company name button!!</button>
+                    <!-- TODO: create the script to change the API_ENDPOINT according to the company selected -->
                 </div>
             </div>
         </header>
@@ -32,7 +33,7 @@
             <!-- <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a> -->
             <a href="#revenue-content" onclick="openSidebar('revenue-content')">Revenue</a>
             <a href="#client-content" onclick="openSidebar('client-content')">Clients</a>
-            <a href="#commissions-content" onclick="openSidebar('client-content')">Commissions</a>
+            <a href="#commissions-content" onclick="openSidebar('commissions-content')">Commissions</a>
             <a href="#pending-invoices" onclick="openSidebar('pending-invoices')">Pending Invoices</a>
         </div>
         <!-- !SECTION -->
@@ -40,7 +41,7 @@
         <!-- SECTION Main Content -->
         <div id="content" class="content">
             
-            <!-- SECTION Clients Tab -->
+            <!-- SECTION Revenue Tab -->
             <div id="revenue-content" class="content-section">
                 <h1>Revenue</h1>
                 
@@ -61,6 +62,8 @@
                     </select>
                     
                     <button id="load-users" class="btn-primary">Filter</button>
+
+                    <button id="back-button" class="btn-primary">Back</button>
                 </div>
                 <!-- !SECTION -->
 
@@ -72,7 +75,54 @@
                 </div>
                 <!-- !SECTION -->
 
-                
+                <!-- SECTION Bubble Chart for Period Breakdown -->
+                <div id="bubble-chart-container" class="card chart-reserved" style="display: none;">
+                    <h3>Revenue Breakdown for <span id="bubble-date"></span></h3>
+                    <p class="chart-description">Bubble size represents revenue amount. Click legend to toggle service types.</p>
+                    <div class="chart-container bubble-container">
+                        <canvas id="bubble-chart"></canvas>
+                    </div>
+                </div>
+                <!-- !SECTION -->
+            </div>
+            <!-- !SECTION -->
+            
+            <!-- SECTION Commissions Tab -->
+            <div id="commissions-content" class="content-section" >
+                <h1>Commissions</h1>
+                <div class="card">
+                    <p>Commissions functionality coming soon...</p>
+                </div>
+            </div>
+            <!-- !SECTION -->
+            
+            <!-- SECTION Client Ta -->
+            <div id="client-content" class="content-section">
+                <h1>Clients</h1>
+                <div class="card">
+                    <div class="table-container">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
+                                    <th>Revenue</th>
+                                    <th>Packages</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <div class="spinner"></div>
+                                        <p>Loading users...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 <!-- SECTION User Detail View -->
                 <div id="user-detail-view" style="display: none;">                
@@ -128,55 +178,6 @@
 
                 </div> 
                 <!-- !SECTION -->
-
-                <!-- SECTION Bubble Chart for Period Breakdown -->
-                <div id="bubble-chart-container" class="card chart-reserved" style="display: none;">
-                    <h3>Revenue Breakdown for <span id="bubble-date"></span></h3>
-                    <p class="chart-description">Bubble size represents revenue amount. Click legend to toggle service types.</p>
-                    <div class="chart-container bubble-container">
-                        <canvas id="bubble-chart"></canvas>
-                    </div>
-                </div>
-                <!-- !SECTION -->
-            </div>
-            <!-- !SECTION -->
-            
-            <!-- SECTION Commissions Tab -->
-            <div id="commissions-content" class="content-section" >
-                <h1>Commissions</h1>
-                <div class="card">
-                    <p>Commissions functionality coming soon...</p>
-                </div>
-            </div>
-            <!-- !SECTION -->
-            
-            <!-- SECTION Client Table -->
-            <div id="client-content" class="content-section">
-                <h1>Clients</h1>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="users-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Email</th>
-                                    <th>Revenue</th>
-                                    <th>Packages</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-tbody">
-                                <tr>
-                                    <td colspan="6" class="loading">
-                                        <div class="spinner"></div>
-                                        <p>Loading users...</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
              <!-- !SECTION -->
             

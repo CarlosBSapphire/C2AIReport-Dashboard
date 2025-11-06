@@ -97,6 +97,10 @@ let allUsersData = [];
  */
 let allDatesInRange = [];
 
+
+
+let lastchart="";
+
 //!SECTION
 
 // ============================================================================
@@ -724,6 +728,10 @@ const subCategoryColors = [
  * );
  */
 async function showBubbleChart(period, users) {
+    const backbutton = document.getElementById('back-button');
+    backbutton.style.display = "block";
+    deployBackbutton('bubbleChart');
+    //FIXME create a functional backbutton so there is only one chart visual at a time. but also so people can go back
     const bubbleContainer = document.getElementById('bubble-chart-container');
     const bubbleCanvas = document.getElementById('bubble-chart');
     const datesInPeriod = period.datesInPeriod;
@@ -1891,7 +1899,7 @@ function openSidebar(name) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Application Initialization
+// SECTION: Initialization
 // ============================================================================
 
 /**
@@ -1972,6 +1980,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 //!SECTION
+
+
+function deployBackbutton(){}
+
 
 /**
  * ============================================================================
