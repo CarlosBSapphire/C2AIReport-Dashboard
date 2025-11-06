@@ -145,80 +145,46 @@ let clientEndDate = null;
  * @namespace sessionCache
  */
 const sessionCache = {
-    /**
-     * Store a value in the session cache
-     * 
-     * @async
-     * @param {string} key - Unique identifier for cached data
-     * @param {*} value - Data to cache (will be JSON stringified)
-     * @returns {Promise<boolean>} True if successful, false otherwise
-     * 
-     * @example
-     * await sessionCache.set('users_data', usersArray);
-     */
-    async set(key, value) {
+    async set(key, value, tags = []) {
         try {
             const response = await fetch(CACHE_ENDPOINT, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ key, value })
+                body: JSON.stringify({ 
+                    key, 
+                    value,
+                    tags, // e.g., ['user-data', 'date-dependent']
+                    persist: !tags.includes('date-dependent') // Don't persist date data
+                })
             });
-            const result = await response.json();
-            return result.success;
+            return (await response.json()).success;
         } catch (error) {
             console.error("Cache set error:", error);
             return false;
         }
     },
     
-    /**
-     * Retrieve a value from the session cache
-     * 
-     * @async
-     * @param {string} key - Unique identifier for cached data
-     * @param {number} [maxAge=300000] - Maximum age in milliseconds (default: 5 minutes)
-     * @returns {Promise<*|null>} Cached data if valid, null if expired or not found
-     * 
-     * @example
-     * const cachedUsers = await sessionCache.get('users_data', 600000);
-     */
-    async get(key, maxAge = 300000) {
-        try {
-            const response = await fetch(`${CACHE_ENDPOINT}?key=${encodeURIComponent(key)}&maxAge=${maxAge}`);
-            const result = await response.json();
-            return result.success ? result.data : null;
-        } catch (error) {
-            console.error("Cache get error:", error);
-            return null;
-        }
-    },
-    
-    /**
-     * Clear cached data
-     * 
-     * @async
-     * @param {string|null} [key=null] - Specific key to clear, or null to clear all
-     * @returns {Promise<boolean>} True if successful, false otherwise
-     * 
-     * @example
-     * await sessionCache.clear(); // Clear all cache
-     * await sessionCache.clear('users_data'); // Clear specific key
-     */
-    async clear(key = null) {
+    async clearByTag(tag) {
+        // Clear all caches with a specific tag
         try {
             const response = await fetch(CACHE_ENDPOINT, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ key })
+                body: JSON.stringify({ tag })
             });
-            const result = await response.json();
-            return result.success;
+            return (await response.json()).success;
         } catch (error) {
             console.error("Cache clear error:", error);
             return false;
         }
     }
 };
+
+// When dates change, only clear date-dependent caches:
+startDateInput.addEventListener('change', (e) => {
+    currentStartDate = e.target.value;
+    sessionCache.clearByTag('date-dependent');
+});
 
 //!SECTION
 
@@ -2189,37 +2155,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Revenue tab date change event handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
-        sessionCache.clear(); 
+        clearDateDependentCache(); 
     });
     
     endDateInput.addEventListener('change', (e) => {
         currentEndDate = e.target.value;
-        sessionCache.clear();
+        clearDateDependentCache();
     });
 
     currentDateTypeInput.addEventListener('change', (e) => {
         currentDateType = e.target.value;
-        sessionCache.clear();
+        clearDateDependentCache();
     });
     
     // Client tab date change event handlers
     clientStartDateInput.addEventListener('change', (e) => {
         clientStartDate = e.target.value;
-        sessionCache.clear(); 
+        clearDateDependentCache(); 
     });
     
     clientEndDateInput.addEventListener('change', (e) => {
         clientEndDate = e.target.value;
-        sessionCache.clear();
+        clearDateDependentCache();
     });
 
     clientDateTypeInput.addEventListener('change', (e) => {
-        sessionCache.clear();
+        clearDateDependentCache();
     });
     
     // Revenue tab load button handler
     loadButton.addEventListener('click', async () => {
-        sessionCache.clear();
+        clearDateDependentCache();
         
         // Fetch users and render main chart
         const users = await fetchData("users", 
@@ -2246,7 +2212,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Client tab load button handler
     loadClientsButton.addEventListener('click', () => {
-        sessionCache.clear(); 
+        clearDateDependentCache(); 
         loadUsers();
         // Hide detail views on reload
         hideOtherCharts('none');
