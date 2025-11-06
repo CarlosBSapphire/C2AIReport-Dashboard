@@ -1640,69 +1640,34 @@ async function showUserDetail(user) {
         const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay, currentDateType);
         const labels = aggregatedData.map(d => d.label);
         
-        // Create datasets based on period type
+        // Always show services as separate datasets (emails, chats, calls, packages)
+        // REVIEW: If adding new service types, add new dataset objects here
         const datasets = [];
-        const type = parseInt(currentDateType);
         
-        if (type === 1) {
-            // Daily view - show services as separate datasets
-            // REVIEW: If adding new service types, add new dataset objects here
-            datasets.push({
-                label: 'Packages',
-                data: aggregatedData.map(d => d.packages),
-                backgroundColor: chartColors.packages.border
-            });
-            datasets.push({
-                label: 'Emails',
-                data: aggregatedData.map(d => d.emails),
-                backgroundColor: chartColors.emails.border
-            });
-            datasets.push({
-                label: 'Chats',
-                data: aggregatedData.map(d => d.chats),
-                backgroundColor: chartColors.chats.border
-            });
-            datasets.push({
-                label: 'Calls',
-                data: aggregatedData.map(d => d.calls),
-                backgroundColor: chartColors.calls.border
-            });
-        } else {
-            // Weekly/Monthly/Yearly view - show sub-categories
-            const subCategoryNames = new Set();
-            aggregatedData.forEach(period => {
-                Object.keys(period.subCategories).forEach(cat => subCategoryNames.add(cat));
-            });
-            
-            const sortedSubCategories = Array.from(subCategoryNames).sort((a, b) => {
-                if (type === 7) {
-                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                    return days.indexOf(a) - days.indexOf(b);
-                } else if (type === 30) {
-                    const weekNum = (w) => parseInt(w.replace('Week ', ''));
-                    return weekNum(a) - weekNum(b);
-                } else if (type === 365) {
-                    const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                                  'July', 'August', 'September', 'October', 'November', 'December'];
-                    return months.indexOf(a) - months.indexOf(b);
-                }
-                return 0;
-            });
-            
-            sortedSubCategories.forEach((subCat, idx) => {
-                datasets.push({
-                    label: subCat,
-                    data: aggregatedData.map(d => {
-                        const subCatData = d.subCategories[subCat];
-                        if (!subCatData) return 0;
-                        // REVIEW: If adding new service types, add them to this summation
-                        return parseFloat((subCatData.packages + subCatData.emails + 
-                                         subCatData.chats + subCatData.calls).toFixed(2));
-                    }),
-                    backgroundColor: subCategoryColors[idx % subCategoryColors.length]
-                });
-            });
-        }
+        // Packages dataset - hidden by default
+        datasets.push({
+            label: 'Packages',
+            data: aggregatedData.map(d => d.packages),
+            backgroundColor: chartColors.packages.border,
+            hidden: true  // Hidden by default, but available in legend
+        });
+        
+        // Active service datasets
+        datasets.push({
+            label: 'Emails',
+            data: aggregatedData.map(d => d.emails),
+            backgroundColor: chartColors.emails.border
+        });
+        datasets.push({
+            label: 'Chats',
+            data: aggregatedData.map(d => d.chats),
+            backgroundColor: chartColors.chats.border
+        });
+        datasets.push({
+            label: 'Calls',
+            data: aggregatedData.map(d => d.calls),
+            backgroundColor: chartColors.calls.border
+        });
 
         // Calculate totals for summary statistics
         const totals = {
@@ -1783,12 +1748,49 @@ async function showUserDetail(user) {
                             footer: function(context) {
                                 const index = context[0].dataIndex;
                                 const data = aggregatedData[index];
-                                return 'Total: $' + data.total.toFixed(2);
+                                // Calculate visible total (excluding hidden datasets)
+                                let visibleTotal = 0;
+                                context.forEach(item => {
+                                    if (!item.dataset.hidden) {
+                                        visibleTotal += item.parsed.y;
+                                    }
+                                });
+                                return 'Visible Total: $' + visibleTotal.toFixed(2);
                             }
                         }
                     },
                     legend: {
-                        position: 'bottom'
+                        position: 'bottom',
+                        onClick: function(e, legendItem, legend) {
+                            // Default Chart.js legend click behavior (toggle dataset visibility)
+                            const index = legendItem.datasetIndex;
+                            const chart = legend.chart;
+                            const meta = chart.getDatasetMeta(index);
+                            
+                            // Toggle visibility
+                            meta.hidden = meta.hidden === null ? !chart.data.datasets[index].hidden : null;
+                            
+                            // Update chart
+                            chart.update();
+                        },
+                        labels: {
+                            generateLabels: function(chart) {
+                                const datasets = chart.data.datasets;
+                                return datasets.map((dataset, i) => {
+                                    const meta = chart.getDatasetMeta(i);
+                                    const hidden = meta.hidden === null ? dataset.hidden : meta.hidden;
+                                    
+                                    return {
+                                        text: dataset.label,
+                                        fillStyle: dataset.backgroundColor,
+                                        strokeStyle: dataset.borderColor,
+                                        lineWidth: dataset.borderWidth,
+                                        hidden: hidden,
+                                        datasetIndex: i
+                                    };
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -1951,4 +1953,4 @@ document.addEventListener('DOMContentLoaded', () => {
  * ============================================================================
  * END OF APPLICATION
  * ============================================================================
- */  
+ */
