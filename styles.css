@@ -242,15 +242,15 @@ header h1 {
 
 .sidebar {
     height: 100%;
-    width: 0;
+    width: 150px;
     position: fixed;
     z-index: 200;
-    top: 0;
+    top: 100;
     left: 0;
     background-color: var(--primary-btn-bg);
     overflow-x: hidden;
     transition: 0.3s;
-    padding-top: 60px;
+    padding-top: 10px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
 }
 
@@ -291,6 +291,8 @@ header h1 {
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
+    padding-left: 150px;
+    
 }
 
 .content-section {

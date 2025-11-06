@@ -1852,21 +1852,21 @@ async function showUserDetail(user) {
 // SECTION: Navigation
 // ============================================================================
 
-/**
- * Open the sidebar navigation
- */
-function openNav() {
-    document.getElementById("mySidenav").style.width = "250px";
-    document.getElementById("content").style.marginLeft = "250px";
-}
+// /**
+//  * Open the sidebar navigation
+//  */
+// function openNav() {
+//     document.getElementById("mySidenav").style.width = "250px";
+//     document.getElementById("content").style.marginLeft = "250px";
+// }
 
-/**
- * Close the sidebar navigation
- */
-function closeNav() {
-    document.getElementById("mySidenav").style.width = "0";
-    document.getElementById("content").style.marginLeft = "0";
-}
+// /**
+//  * Close the sidebar navigation
+//  */
+// function closeNav() {
+//     document.getElementById("mySidenav").style.width = "0";
+//     document.getElementById("content").style.marginLeft = "0";
+// }
 
 //!SECTION
 
