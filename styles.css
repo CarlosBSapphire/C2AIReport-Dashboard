@@ -242,7 +242,7 @@ header h1 {
 
 .sidebar {
     height: 100%;
-    width: 150px;
+    width: 15%;
     position: fixed;
     z-index: 200;
     top: 100;
@@ -267,6 +267,7 @@ header h1 {
 .sidebar a:hover {
     background-color: var(--nav-active-background);
     border-left-color: var(--nav-active-left-trim);
+    color: var(--nav-active-left-trim);
 }
 
 .sidebar a.active {
@@ -291,7 +292,7 @@ header h1 {
     padding: 2rem;
     max-width: 1400px;
     margin: 0 auto;
-    padding-left: 150px;
+    padding-left: 16%;
     
 }
 

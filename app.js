@@ -1150,7 +1150,8 @@ async function renderMainClientChart(users, dates, dateType) {
             label: 'Packages',
             data: aggregatedData.map(d => d.packages),
             backgroundColor: chartColors.packages.border,
-            stack: 'revenue'
+            stack: 'revenue',
+            hidden: true
         });
         datasets.push({
             label: 'Emails',
@@ -1700,11 +1701,12 @@ async function showUserDetail(user) {
         document.getElementById('stat-total').textContent = `$${totals.total.toFixed(2)}`;
 
         // Render stacked bar chart
-        const ctx = document.getElementById('revenue-chart').getContext('2d');
-        
         if (chartInstance) {
             chartInstance.destroy();
+            chartInstance = null;  
         }
+
+        const ctx = document.getElementById('chart-id').getContext('2d');
 
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -1851,23 +1853,41 @@ async function showUserDetail(user) {
 // ============================================================================
 // SECTION: Navigation
 // ============================================================================
+/**
+ * open catagories from links on the sidebar
+ * 
+ * - checks if name is in array
+ * - goes through arrya
+ * - if it is the same name sets display to block
+ * - if not sets display to none
+ * 
+ * @param {any} name -id of the tab to open
+ * 
+ * @return none
+ */
+function openSidebar(name) {
+    name=String(name);
+    console.log(`tab name is ${name}`)
+    const availableTabs = ['revenue-content', 'client-content', 'commissions-content', 'pending-invoices']; 
+    
+    // Check if the requested tab name is valid
+    if (!availableTabs.includes(name)) {
+        console.warn(`Attempted to open unknown tab: ${name}`);
+        return; // Exit the function early if the tab is not found
+    }
 
-// /**
-//  * Open the sidebar navigation
-//  */
-// function openNav() {
-//     document.getElementById("mySidenav").style.width = "250px";
-//     document.getElementById("content").style.marginLeft = "250px";
-// }
-
-// /**
-//  * Close the sidebar navigation
-//  */
-// function closeNav() {
-//     document.getElementById("mySidenav").style.width = "0";
-//     document.getElementById("content").style.marginLeft = "0";
-// }
-
+    // Use forEach to iterate directly over the tab names
+    availableTabs.forEach(tabName => {
+        const thisTab = document.getElementById(tabName);
+        console.log(`attempting to open: ${thisTab} aka ${name}`)
+        // Use the Ternary Operator for a concise show/hide check
+        if (thisTab) {
+            thisTab.style.display = (tabName === name) ? 'block' : 'none';
+        } else {
+            console.error(`Element with ID '${tabName}' not found.`);
+        }
+    });
+}
 //!SECTION
 
 // ============================================================================
@@ -1945,6 +1965,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize application
     loadUsers();
+
+    //show revenue section
+    openSidebar("revenue-content");
+
 });
 
 //!SECTION
