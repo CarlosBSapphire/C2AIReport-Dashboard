@@ -8,7 +8,7 @@
  * calls, and manual packages).
  * 
  * @file app.js
- * @version 3.0.0
+ * @version 3.1.0
  * @requires Chart.js v4.4.9
  * @requires chartjs-plugin-trendline
  * 
@@ -97,9 +97,38 @@ let allUsersData = [];
  */
 let allDatesInRange = [];
 
+/**
+ * Track which chart is currently displayed
+ * @type {string|null}
+ * @values 'main' = Main revenue chart, 'bubble' = Bubble chart, 'user' = User detail chart
+ */
+let currentChartView = null;
 
+/**
+ * Pagination state for service detail modal
+ * @type {Object}
+ */
+let paginationState = {
+    currentPage: 1,
+    recordsPerPage: 20,
+    totalRecords: 0,
+    allRecords: [],
+    serviceType: null,
+    userId: null,
+    dates: null
+};
 
-let lastchart="";
+/**
+ * Start date for client tab (independent from revenue tab)
+ * @type {string|null}
+ */
+let clientStartDate = null;
+
+/**
+ * End date for client tab (independent from revenue tab)
+ * @type {string|null}
+ */
+let clientEndDate = null;
 
 //!SECTION
 
@@ -438,7 +467,7 @@ async function fetchData(tableName, columns, filters = {}) {
  * console.log(stats.weeklyPackageRevenue); // 150.00
  */
 async function getPackageStatsForUser(userId) {
-    const packages = await fetchData("manual_charges", ["user_id", "cost", "name", "frequency"], { user_id: userId });
+    const packages = await fetchData("manual_charges", ["user_id", "cost", "name", "frequency", "created_time"], { user_id: userId });
     const packageCount = packages.length;
     
     // Calculate total weekly revenue considering package frequency
@@ -455,7 +484,7 @@ async function getPackageStatsForUser(userId) {
  * Get detailed revenue breakdown by date for a specific user
  * 
  * This function aggregates revenue across all service categories:
- * - Manual packages (prorated daily based on frequency)
+ * - Manual packages (prorated daily based on frequency and accounting for created_time)
  * - Email overages (beyond threshold)
  * - Chat conversations
  * - Call minutes
@@ -481,7 +510,7 @@ async function getRevenueByDateForUser(userId, dates) {
     // Fetch all revenue data sources concurrently
     // REVIEW: If adding new service types, add new fetchData calls here and include in Promise.all
     const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts] = await Promise.all([
-        fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: userId }),
+        fetchData("manual_charges", ["user_id", "frequency", "cost", "name", "created_time"], { user_id: userId }),
         fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
@@ -499,26 +528,31 @@ async function getRevenueByDateForUser(userId, dates) {
         };
     });
 
-    // Calculate daily package cost (prorated from weekly/monthly)
-    let totalPackageCostByDay = 0;
-    packages.forEach(pkg => {
-        let dailyPackageCost = 0;
-        const packageCost = parseFloat(pkg.cost) || 0;
-        
-        if (pkg.frequency === 'Weekly') {
-            // Weekly packages: divide by 7 days
-            dailyPackageCost = packageCost / 7;
-        } else if (pkg.frequency === 'Monthly') {
-            // Monthly packages: divide by 30.5 days (average month length)
-            dailyPackageCost = packageCost / 30.5;
-        }
-        
-        totalPackageCostByDay += dailyPackageCost;
-    });
-
-    // Apply daily package cost to all dates
+    // Calculate daily package cost (prorated from weekly/monthly) accounting for created_time
     dates.forEach(date => {
-        revenueByDate[date].packages = totalPackageCostByDay;
+        let dailyPackageCost = 0;
+        
+        packages.forEach(pkg => {
+            const packageCost = parseFloat(pkg.cost) || 0;
+            const createdDate = pkg.created_time ? formatDate(new Date(pkg.created_time)) : null;
+            
+            // Only count package if it was created on or before this date
+            if (!createdDate || createdDate <= date) {
+                let dailyCost = 0;
+                
+                if (pkg.frequency === 'Weekly') {
+                    // Weekly packages: divide by 7 days
+                    dailyCost = packageCost / 7;
+                } else if (pkg.frequency === 'Monthly') {
+                    // Monthly packages: divide by 30.5 days (average month length)
+                    dailyCost = packageCost / 30.5;
+                }
+                
+                dailyPackageCost += dailyCost;
+            }
+        });
+        
+        revenueByDate[date].packages = dailyPackageCost;
     });
 
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -700,6 +734,73 @@ const subCategoryColors = [
 //!SECTION
 
 // ============================================================================
+// SECTION: Chart Management
+// ============================================================================
+
+/**
+ * Hide all charts except the specified one
+ * 
+ * @param {string} chartToShow - Which chart to display ('main', 'bubble', 'user', or 'none')
+ */
+function hideOtherCharts(chartToShow) {
+    const mainChart = document.getElementById('main-client-chart');
+    const bubbleChart = document.getElementById('bubble-chart-container');
+    const userDetail = document.getElementById('user-detail-view');
+    
+    // Hide all by default
+    mainChart.style.display = 'none';
+    bubbleChart.style.display = 'none';
+    userDetail.style.display = 'none';
+    
+    // Show the requested chart
+    switch(chartToShow) {
+        case 'main':
+            mainChart.style.display = 'block';
+            currentChartView = 'main';
+            break;
+        case 'bubble':
+            bubbleChart.style.display = 'block';
+            currentChartView = 'bubble';
+            break;
+        case 'user':
+            userDetail.style.display = 'block';
+            currentChartView = 'user';
+            break;
+        case 'none':
+            currentChartView = null;
+            break;
+    }
+    
+    // Update back button visibility
+    const backButton = document.getElementById('back-button');
+    if (chartToShow === 'bubble' || chartToShow === 'user') {
+        backButton.style.display = 'block';
+    } else {
+        backButton.style.display = 'none';
+    }
+}
+
+/**
+ * Handle back button click - navigate to previous view
+ */
+function deployBackbutton() {
+    const backButton = document.getElementById('back-button');
+    
+    backButton.onclick = () => {
+        if (currentChartView === 'bubble') {
+            // From bubble chart, go back to main chart
+            hideOtherCharts('main');
+        } else if (currentChartView === 'user') {
+            // From user detail, go back to client table
+            hideOtherCharts('none');
+            document.getElementById('users-table').scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+}
+
+//!SECTION
+
+// ============================================================================
 // SECTION: Bubble Chart for Revenue Breakdown
 // ============================================================================
 
@@ -728,11 +829,8 @@ const subCategoryColors = [
  * );
  */
 async function showBubbleChart(period, users) {
-    const backbutton = document.getElementById('back-button');
-    backbutton.style.display = "block";
-    deployBackbutton('bubbleChart');
-    //FIXME create a functional backbutton so there is only one chart visual at a time. but also so people can go back
-    const bubbleContainer = document.getElementById('bubble-chart-container');
+    hideOtherCharts('bubble');
+    
     const bubbleCanvas = document.getElementById('bubble-chart');
     const datesInPeriod = period.datesInPeriod;
     
@@ -741,7 +839,6 @@ async function showBubbleChart(period, users) {
         ? `${datesInPeriod[0]} to ${datesInPeriod[datesInPeriod.length - 1]}` 
         : datesInPeriod[0];
     
-    bubbleContainer.style.display = 'block';
     document.getElementById('bubble-date').textContent = dateDisplay;
     
     // Destroy existing chart instance
@@ -1108,12 +1205,15 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
  * await renderMainClientChart(usersArray, datesArray, '7'); // Weekly view
  */
 async function renderMainClientChart(users, dates, dateType) {
+    console.log('ranedering main chart')
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
     
     // Destroy existing chart
     if (mainChartInstance) {
         mainChartInstance.destroy();
     }
+
+    hideOtherCharts('main');
 
     // Fetch revenue data for all users
     const revenuePromises = users.map(user => getRevenueByDateForUser(user.id, dates));
@@ -1318,8 +1418,169 @@ async function renderMainClientChart(users, dates, dateType) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Service Detail Modal
+// SECTION: Service Detail Modal with Pagination
 // ============================================================================
+
+/**
+ * Render pagination controls for service detail modal
+ */
+function renderPaginationControls() {
+    const totalPages = Math.ceil(paginationState.totalRecords / paginationState.recordsPerPage);
+    
+    const paginationHTML = `
+        <div class="pagination-controls">
+            <button id="prev-page" ${paginationState.currentPage === 1 ? 'disabled' : ''}>Previous</button>
+            <span>Page ${paginationState.currentPage} of ${totalPages}</span>
+            <button id="next-page" ${paginationState.currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            <span class="records-info">Showing ${Math.min((paginationState.currentPage - 1) * paginationState.recordsPerPage + 1, paginationState.totalRecords)} - ${Math.min(paginationState.currentPage * paginationState.recordsPerPage, paginationState.totalRecords)} of ${paginationState.totalRecords} records</span>
+        </div>
+    `;
+    
+    return paginationHTML;
+}
+
+/**
+ * Get records for current page
+ */
+function getCurrentPageRecords() {
+    const startIdx = (paginationState.currentPage - 1) * paginationState.recordsPerPage;
+    const endIdx = startIdx + paginationState.recordsPerPage;
+    return paginationState.allRecords.slice(startIdx, endIdx);
+}
+
+/**
+ * Update modal content with paginated records
+ */
+function updateModalContent() {
+    const modalBody = document.getElementById('service-modal-body');
+    const records = getCurrentPageRecords();
+    let tableHTML = '';
+    
+    // REVIEW: If adding new service types, add new case here
+    switch(paginationState.serviceType) {
+        case 'packages':
+            tableHTML = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Package Name</th>
+                            <th>Frequency</th>
+                            <th>Cost</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${records.map(r => `
+                            <tr>
+                                <td>${r.name || 'Unnamed'}</td>
+                                <td>${r.frequency}</td>
+                                <td>$${parseFloat(r.cost).toFixed(2)}</td>
+                                <td>${r.created_time ? new Date(r.created_time).toLocaleString() : 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${renderPaginationControls()}
+            `;
+            break;
+            
+        case 'emails':
+            tableHTML = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>From</th>
+                            <th>Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${records.map(r => `
+                            <tr>
+                                <td>${new Date(r.updated_at).toLocaleString()}</td>
+                                <td>${r.from_email || 'N/A'}</td>
+                                <td>${r.subject || 'No Subject'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${renderPaginationControls()}
+            `;
+            break;
+            
+        case 'chats':
+            tableHTML = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Conversation ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${records.map(r => `
+                            <tr>
+                                <td>${new Date(r.created_date).toLocaleString()}</td>
+                                <td>${r.conversation_id || 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${renderPaginationControls()}
+            `;
+            break;
+            
+        case 'calls':
+            tableHTML = `
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Duration (minutes)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${records.map(r => `
+                            <tr>
+                                <td>${new Date(r.created_at).toLocaleString()}</td>
+                                <td>${parseFloat(r.duration || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                ${renderPaginationControls()}
+            `;
+            break;
+            
+        default:
+            tableHTML = '<p>Service type not recognized.</p>';
+    }
+    
+    modalBody.innerHTML = tableHTML;
+    
+    // Attach pagination event listeners
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            if (paginationState.currentPage > 1) {
+                paginationState.currentPage--;
+                updateModalContent();
+            }
+        };
+    }
+    
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            const totalPages = Math.ceil(paginationState.totalRecords / paginationState.recordsPerPage);
+            if (paginationState.currentPage < totalPages) {
+                paginationState.currentPage++;
+                updateModalContent();
+            }
+        };
+    }
+}
 
 /**
  * Show detailed service records in a modal when stat card is clicked
@@ -1345,124 +1606,52 @@ async function showServiceDetail(serviceType, userId, dates) {
     modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading data...</p></div>';
     modal.style.display = 'block';
     
+    // Store pagination state
+    paginationState.serviceType = serviceType;
+    paginationState.userId = userId;
+    paginationState.dates = dates;
+    paginationState.currentPage = 1;
+    
     try {
         let records = [];
-        let tableHTML = '';
         
         // REVIEW: If adding new service types, add new case here
         switch(serviceType) {
             case 'packages':
                 records = await fetchData("manual_charges", 
-                    ["user_id", "cost", "name", "frequency"], 
+                    ["user_id", "cost", "name", "frequency", "created_time"], 
                     { user_id: userId });
-                
-                tableHTML = `
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>Package Name</th>
-                                <th>Frequency</th>
-                                <th>Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${records.map(r => `
-                                <tr>
-                                    <td>${r.name || 'Unnamed'}</td>
-                                    <td>${r.frequency}</td>
-                                    <td>$${parseFloat(r.cost).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
                 break;
                 
             case 'emails':
                 records = await fetchData("AI_Email_Records", 
                     ["user_id", "updated_at", "subject", "from_email"], 
                     { user_id: userId });
-                
-                tableHTML = `
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>From</th>
-                                <th>Subject</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${records.map(r => `
-                                <tr>
-                                    <td>${new Date(r.updated_at).toLocaleString()}</td>
-                                    <td>${r.from_email || 'N/A'}</td>
-                                    <td>${r.subject || 'No Subject'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
                 break;
                 
             case 'chats':
                 records = await fetchData("AI_Chat_Data", 
                     ["user_id", "created_date", "conversation_id"], 
                     { user_id: userId });
-                
-                tableHTML = `
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Conversation ID</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${records.map(r => `
-                                <tr>
-                                    <td>${new Date(r.created_date).toLocaleString()}</td>
-                                    <td>${r.conversation_id || 'N/A'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
                 break;
                 
             case 'calls':
                 records = await fetchData("Call_Data", 
                     ["user_id", "created_at", "duration"], 
                     { user_id: userId });
-                
-                tableHTML = `
-                    <table class="detail-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Duration (minutes)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${records.map(r => `
-                                <tr>
-                                    <td>${new Date(r.created_at).toLocaleString()}</td>
-                                    <td>${parseFloat(r.duration || 0).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
                 break;
                 
             default:
-                tableHTML = '<p>Service type not recognized.</p>';
+                records = [];
         }
+        
+        paginationState.allRecords = records;
+        paginationState.totalRecords = records.length;
         
         if (records.length === 0) {
             modalBody.innerHTML = '<p class="no-data">No records found for this period.</p>';
         } else {
-            modalBody.innerHTML = tableHTML;
+            updateModalContent();
         }
         
     } catch (error) {
@@ -1477,6 +1666,17 @@ async function showServiceDetail(serviceType, userId, dates) {
 function closeServiceModal() {
     const modal = document.getElementById('service-detail-modal');
     modal.style.display = 'none';
+    
+    // Reset pagination state
+    paginationState = {
+        currentPage: 1,
+        recordsPerPage: 20,
+        totalRecords: 0,
+        allRecords: [],
+        serviceType: null,
+        userId: null,
+        dates: null
+    };
 }
 
 //!SECTION
@@ -1510,6 +1710,13 @@ async function loadUsers() {
     const tbody = document.getElementById('users-tbody');
     
     try {
+        // Use clientStartDate and clientEndDate for client tab
+        const tempStart = currentStartDate;
+        const tempEnd = currentEndDate;
+        
+        currentStartDate = clientStartDate;
+        currentEndDate = clientEndDate;
+        
         // Fetch all non-admin users
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
@@ -1520,10 +1727,14 @@ async function loadUsers() {
         if (users.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="no-data">No users found.</td></tr>'; 
             console.warn("No users found.");
+            
+            // Restore revenue dates
+            currentStartDate = tempStart;
+            currentEndDate = tempEnd;
             return;
         }
 
-        const dates = getDatesInRange(currentStartDate, currentEndDate);
+        const dates = getDatesInRange(clientStartDate, clientEndDate);
         
         // Store globally for stat card drill-down
         allDatesInRange = dates;
@@ -1573,8 +1784,9 @@ async function loadUsers() {
             tbody.appendChild(tr);
         });
         
-        // Render main aggregate chart
-        await renderMainClientChart(usersWithStats, dates, currentDateType);
+        // Restore revenue dates
+        currentStartDate = tempStart;
+        currentEndDate = tempEnd;
 
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="6" class="error">Error loading users: ${error.message}</td></tr>`;
@@ -1615,8 +1827,7 @@ async function showUserDetail(user) {
     console.log("Showing details for user:", user);
     currentUser = user;
     
-    const detailView = document.getElementById('user-detail-view');
-    detailView.style.display = 'block';
+    hideOtherCharts('user');
     
     document.getElementById('user-detail-title').textContent = 
         `Revenue Breakdown: ${user.first_name} ${user.last_name}`;
@@ -1626,10 +1837,19 @@ async function showUserDetail(user) {
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '$0.00');
     
     // Smooth scroll to detail view
-    detailView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('user-detail-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
     
     try {
-        const dates = getDatesInRange(currentStartDate, currentEndDate);
+        // Use client tab dates
+        const tempStart = currentStartDate;
+        const tempEnd = currentEndDate;
+        const tempType = currentDateType;
+        
+        currentStartDate = clientStartDate;
+        currentEndDate = clientEndDate;
+        currentDateType = document.getElementById('client-date-type').value;
+        
+        const dates = getDatesInRange(clientStartDate, clientEndDate);
         
         // Get revenue breakdown by date
         const revenueByDate = await getRevenueByDateForUser(user.id, dates);
@@ -1714,7 +1934,7 @@ async function showUserDetail(user) {
             chartInstance = null;  
         }
 
-        const ctx = document.getElementById('chart-id').getContext('2d');
+        const ctx = document.getElementById('revenue-chart').getContext('2d');
 
         chartInstance = new Chart(ctx, {
             type: 'bar',
@@ -1820,7 +2040,8 @@ async function showUserDetail(user) {
                         name: name,
                         cost: 0,
                         count: 0,
-                        frequency: pkg.frequency || 'Weekly'
+                        frequency: pkg.frequency || 'Weekly',
+                        created_time: pkg.created_time
                     }; 
                 }
                 packageAggregation[name].cost += parseFloat(pkg.cost) || 0;
@@ -1834,6 +2055,7 @@ async function showUserDetail(user) {
                 pkgDiv.className = 'package-item';
                 
                 const countText = pkg.count > 1 ? ` (x${pkg.count})` : '';
+                const createdText = pkg.created_time ? `<p class="package-created">Created: ${new Date(pkg.created_time).toLocaleDateString()}</p>` : '';
                 
                 pkgDiv.innerHTML = `
                     <div class="package-header">
@@ -1841,6 +2063,7 @@ async function showUserDetail(user) {
                         <span class="package-badge">${pkg.frequency}</span>
                     </div>
                     <p class="package-cost">$${pkg.cost.toFixed(2)}</p>
+                    ${createdText}
                 `;
                 packagesGrid.appendChild(pkgDiv);
             });
@@ -1849,10 +2072,20 @@ async function showUserDetail(user) {
         } else {
             document.getElementById('packages-card').style.display = 'none';
         }
+        
+        // Restore revenue dates
+        currentStartDate = tempStart;
+        currentEndDate = tempEnd;
+        currentDateType = tempType;
 
     } catch (error) {
         console.error("Error loading chart:", error);
         alert('Error loading revenue data: ' + error.message);
+        
+        // Restore revenue dates even on error
+        currentStartDate = tempStart;
+        currentEndDate = tempEnd;
+        currentDateType = tempType;
     }
 }
 
@@ -1862,10 +2095,10 @@ async function showUserDetail(user) {
 // SECTION: Navigation
 // ============================================================================
 /**
- * open catagories from links on the sidebar
+ * open categories from links on the sidebar
  * 
  * - checks if name is in array
- * - goes through arrya
+ * - goes through array
  * - if it is the same name sets display to block
  * - if not sets display to none
  * 
@@ -1895,6 +2128,11 @@ function openSidebar(name) {
             console.error(`Element with ID '${tabName}' not found.`);
         }
     });
+    
+    // Hide all charts when switching tabs
+    if (name !== 'revenue-content') {
+        hideOtherCharts('none');
+    }
 }
 //!SECTION
 
@@ -1914,16 +2152,23 @@ function openSidebar(name) {
  * @listens DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // Get DOM elements
+    // Get DOM elements for revenue tab
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
     const currentDateTypeInput = document.getElementById("date-type");
     const loadButton = document.getElementById("load-users");
+    
+    // Get DOM elements for client tab
+    const clientStartDateInput = document.getElementById("client-start-date");
+    const clientEndDateInput = document.getElementById("client-end-date");
+    const clientDateTypeInput = document.getElementById("client-date-type");
+    const loadClientsButton = document.getElementById("load-clients");
 
     // Set default date range (last Sunday to today)
     const today = new Date();
     const lastSunday = getLastSunday();
     
+    // Revenue tab defaults
     currentEndDate = formatDate(today);
     currentStartDate = formatDate(lastSunday);
     currentDateType = '1'; // Daily view by default
@@ -1932,7 +2177,15 @@ document.addEventListener('DOMContentLoaded', () => {
     endDateInput.value = currentEndDate;
     currentDateTypeInput.value = currentDateType;
     
-    // Date change event handlers
+    // Client tab defaults
+    clientEndDate = formatDate(today);
+    clientStartDate = formatDate(lastSunday);
+    
+    clientStartDateInput.value = clientStartDate;
+    clientEndDateInput.value = clientEndDate;
+    clientDateTypeInput.value = '1'; // Daily view by default
+    
+    // Revenue tab date change event handlers
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
         sessionCache.clear(); 
@@ -1948,13 +2201,54 @@ document.addEventListener('DOMContentLoaded', () => {
         sessionCache.clear();
     });
     
-    // Load button handler
-    loadButton.addEventListener('click', () => {
+    // Client tab date change event handlers
+    clientStartDateInput.addEventListener('change', (e) => {
+        clientStartDate = e.target.value;
+        sessionCache.clear(); 
+    });
+    
+    clientEndDateInput.addEventListener('change', (e) => {
+        clientEndDate = e.target.value;
+        sessionCache.clear();
+    });
+
+    clientDateTypeInput.addEventListener('change', (e) => {
+        sessionCache.clear();
+    });
+    
+    // Revenue tab load button handler
+    loadButton.addEventListener('click', async () => {
+        sessionCache.clear();
+        
+        // Fetch users and render main chart
+        const users = await fetchData("users", 
+            ["id", "first_name", "last_name", "email"],
+            { role: "user" }
+        );
+        
+        if (users.length > 0) {
+            const dates = getDatesInRange(currentStartDate, currentEndDate);
+            allDatesInRange = dates;
+            
+            // Calculate stats for all users
+            const statsPromises = users.map(async user => {
+                const packageStats = await getPackageStatsForUser(user.id);
+                const totalRevenue = await getTotalRevenueForUser(user.id, dates);
+                return { ...user, ...packageStats, totalRevenue };
+            });
+            const usersWithStats = await Promise.all(statsPromises);
+            allUsersData = usersWithStats;
+            
+            await renderMainClientChart(usersWithStats, dates, currentDateType);
+        }
+    });
+    
+    // Client tab load button handler
+    loadClientsButton.addEventListener('click', () => {
         sessionCache.clear(); 
         loadUsers();
         // Hide detail views on reload
-        document.getElementById('user-detail-view').style.display = 'none'; 
-        document.getElementById('bubble-chart-container').style.display = 'none';
+        hideOtherCharts('none');
     });
 
     // Modal close handlers
@@ -1971,18 +2265,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Initialize back button functionality
+    deployBackbutton();
+
     // Initialize application
     loadUsers();
 
-    //show revenue section
+    //show revenue section and start that chart
     openSidebar("revenue-content");
+
+    (async () => {
+        // Fetch users and render main chart
+        const users = await fetchData("users", 
+            ["id", "first_name", "last_name", "email"],
+            { role: "user" }
+        );
+        
+        if (users.length > 0) {
+            const dates = getDatesInRange(currentStartDate, currentEndDate);
+            allDatesInRange = dates;
+            
+            // Calculate stats for all users
+            const statsPromises = users.map(async user => {
+                const packageStats = await getPackageStatsForUser(user.id);
+                const totalRevenue = await getTotalRevenueForUser(user.id, dates);
+                return { ...user, ...packageStats, totalRevenue };
+            });
+            const usersWithStats = await Promise.all(statsPromises);
+            allUsersData = usersWithStats;
+            
+            await renderMainClientChart(usersWithStats, dates, currentDateType);
+        }
+    })();
 
 });
 
 //!SECTION
-
-
-function deployBackbutton(){}
 
 
 /**
