@@ -8,7 +8,7 @@
  * calls, and manual packages).
  * 
  * @file app.js
- * @version 2.0.0
+ * @version 3.0.0
  * @requires Chart.js v4.4.9
  * @requires chartjs-plugin-trendline
  * 
@@ -55,10 +55,10 @@ let chartInstance = null;
 let mainChartInstance = null;
 
 /**
- * Chart instance for radar breakdown visualization
+ * Chart instance for bubble breakdown visualization
  * @type {Chart|null}
  */
-let radarChartInstance = null; //FIXME make this a bubble chart
+let bubbleChartInstance = null;
 
 /**
  * Currently selected user object
@@ -84,6 +84,18 @@ let currentEndDate = null;
  * @values '1' = Daily, '7' = Weekly, '30' = Monthly, '365' = Yearly
  */
 let currentDateType = null;
+
+/**
+ * Store all users data for stat card drill-down
+ * @type {Array<Object>}
+ */
+let allUsersData = [];
+
+/**
+ * Store all dates in current range for stat card drill-down
+ * @type {Array<string>}
+ */
+let allDatesInRange = [];
 
 //!SECTION
 
@@ -229,7 +241,7 @@ const getDatesInRange = (startDate, endDate) => {
     
     while (current <= end) {
         dates.push(formatDate(current));
-        current.setDate(current.getDate());
+        current.setDate(current.getDate() + 1);
     }
     return dates;
 }
@@ -250,6 +262,46 @@ const addDaysToDate = (dateString, days) => {
     return formatDate(date);
 }
 
+/**
+ * Get the day of week name for a given date
+ * 
+ * @param {string} dateString - Date in YYYY-MM-DD format
+ * @returns {string} Day name (e.g., 'Sunday', 'Monday')
+ */
+const getDayOfWeek = (dateString) => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const date = new Date(dateString);
+    return daysOfWeek[date.getDay()];
+}
+
+/**
+ * Get the week number and year for a given date
+ * 
+ * @param {string} dateString - Date in YYYY-MM-DD format
+ * @returns {string} Week identifier (e.g., 'Week 1', 'Week 2')
+ */
+const getWeekOfMonth = (dateString) => {
+    const date = new Date(dateString);
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const dayOfMonth = date.getDate();
+    const dayOfWeek = firstDayOfMonth.getDay();
+    const weekNumber = Math.ceil((dayOfMonth + dayOfWeek) / 7);
+    return `Week ${weekNumber}`;
+}
+
+/**
+ * Get the month name for a given date
+ * 
+ * @param {string} dateString - Date in YYYY-MM-DD format
+ * @returns {string} Month name (e.g., 'January', 'February')
+ */
+const getMonthName = (dateString) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    const date = new Date(dateString);
+    return months[date.getMonth()];
+}
+
 //!SECTION
 
 // ============================================================================
@@ -264,6 +316,8 @@ const addDaysToDate = (dateString, days) => {
  * - Date range filtering
  * - Error handling and logging
  * - Response parsing and normalization
+ * 
+ * REVIEW: When adding new service types, update the dateColumnMap in this function
  * 
  * @async
  * @param {string} tableName - Name of the database table to query
@@ -292,6 +346,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const enhancedFilters = { ...filters };
     if (currentStartDate && currentEndDate) {
         // Map table names to their date columns
+        // REVIEW: If adding new service types, add their table names and date column mappings here
         const dateColumnMap = {
             'Daily_Email_Cost_Record': 'created_date',
             'Daily_Chat_Record_Cost_Record': 'created_date',
@@ -300,7 +355,6 @@ async function fetchData(tableName, columns, filters = {}) {
             'Call_Data': 'created_at',
             'AI_Chat_Data': 'created_date'
         };
-        // REVIEW: If adding new service types, add their table names and date column mappings here
         
         const dateColumn = dateColumnMap[tableName];
         if (dateColumn) {
@@ -323,7 +377,8 @@ async function fetchData(tableName, columns, filters = {}) {
     const text = await response.text();
     
     if (!text || text.trim().length === 0) {
-        console.warn(`Empty response body received from table: ${tableName}`);//FIXME - show user.id if there is one in the warning
+        const userIdInfo = filters.user_id ? ` for user ID: ${filters.user_id}` : '';
+        console.warn(`Empty response body received from table: ${tableName}${userIdInfo}`);
         return [];
     }
     
@@ -364,6 +419,8 @@ async function fetchData(tableName, columns, filters = {}) {
  * - Total weekly revenue from packages (accounting for frequency)
  * - Comma-separated list of package names
  * 
+ * REVIEW: If adding new package types or pricing models, update this function
+ * 
  * @async
  * @param {number|string} userId - User ID to query
  * @returns {Promise<Object>} Package statistics object
@@ -399,6 +456,9 @@ async function getPackageStatsForUser(userId) {
  * - Chat conversations
  * - Call minutes
  * 
+ * REVIEW: If adding new service types, add new properties to the return object structure
+ * and add new fetchData calls for the new service tables
+ * 
  * @async
  * @param {number|string} userId - User ID to query
  * @param {string[]} dates - Array of dates to calculate revenue for
@@ -408,7 +468,6 @@ async function getPackageStatsForUser(userId) {
  * @returns {number} .[date].emails - Email revenue
  * @returns {number} .[date].chats - Chat revenue
  * @returns {number} .[date].calls - Call revenue
- * REVIEW: If adding new service types, add new properties to the return object structure
  * 
  * @example
  * const revenue = await getRevenueByDateForUser(123, ['2024-01-01', '2024-01-02']);
@@ -416,15 +475,16 @@ async function getPackageStatsForUser(userId) {
  */
 async function getRevenueByDateForUser(userId, dates) {
     // Fetch all revenue data sources concurrently
+    // REVIEW: If adding new service types, add new fetchData calls here and include in Promise.all
     const [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts] = await Promise.all([
         fetchData("manual_charges", ["user_id", "frequency", "cost", "name"], { user_id: userId }),
         fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
     ]);
-    // REVIEW: If adding new service types, add new fetchData calls here and include in Promise.all
 
     // Initialize revenue structure for all dates
+    // REVIEW: If adding new service types, add new properties to this object
     const revenueByDate = {};
     dates.forEach(date => {
         revenueByDate[date] = {
@@ -432,7 +492,7 @@ async function getRevenueByDateForUser(userId, dates) {
             emails: 0,
             chats: 0,
             calls: 0
-        }; // REVIEW if we add more packages or services then this needs to mannualy created
+        };
     });
 
     // Calculate daily package cost (prorated from weekly/monthly)
@@ -512,7 +572,9 @@ async function getRevenueByDateForUser(userId, dates) {
             }
         });
     });
-    // REVIEW if we add more packages or services then this needs to mannualy created
+    
+    // REVIEW: If adding new service types, add processing logic here similar to emails/chats/calls above
+    
     return revenueByDate;
 }
 
@@ -520,6 +582,8 @@ async function getRevenueByDateForUser(userId, dates) {
  * Calculate total revenue for a user across a date range
  * 
  * Sums all revenue categories for all dates in the specified range.
+ * 
+ * REVIEW: If adding new service types, update the revenue summation logic
  * 
  * @async
  * @param {number|string} userId - User ID to query
@@ -535,6 +599,7 @@ async function getTotalRevenueForUser(userId, dates) {
     let total = 0;
     dates.forEach(date => {
         const dayRevenue = revenueByDate[date];
+        // REVIEW: If adding new service types, add them to this summation
         total += dayRevenue.packages + dayRevenue.emails + dayRevenue.chats + dayRevenue.calls;
     });
     return parseFloat(total.toFixed(2));
@@ -582,6 +647,8 @@ function hexToRgba(hex, alpha) {
  * Uses CSS custom properties from styles.css for theme consistency
  * Colors automatically adapt to light/dark mode
  * 
+ * REVIEW: If adding new service types, add corresponding color definitions here
+ * 
  * @constant {Object} chartColors
  */
 const chartColors = {
@@ -609,153 +676,209 @@ const chartColors = {
         get border() { return getCSSVariable('--info'); },
         get point() { return getCSSVariable('--info'); }
     }
-    // REVIEW if we add more packages or services then this needs to mannualy created
 };
+
+/**
+ * Color palette for sub-categories (days of week, weeks of month, months of year)
+ * 
+ * @constant {Array<string>}
+ */
+const subCategoryColors = [
+    '#00356f', // Navy
+    '#0467d2', // Blue
+    '#008387', // Teal
+    '#46c2c6', // Light teal
+    '#f59e0b', // Amber
+    '#2563eb', // Royal blue
+    '#3b82f6'  // Sky blue
+];
 
 //!SECTION
 
 // ============================================================================
-// SECTION: Radar Chart for Revenue Breakdown
-//FIXME - !!!!!!!!!! MAKE THIS A BUBBLE CHART with the x axis as dates, the y axis as users, the colors as types or revenue, and the radius of the bubles as the revenue from that datapoint
+// SECTION: Bubble Chart for Revenue Breakdown
 // ============================================================================
 
 /**
- * Display radar chart showing revenue breakdown by user and type
+ * Display bubble chart showing revenue breakdown by user, date, and type
  * 
- * Creates a multi-dataset radar chart where:
- * - Each axis represents a user
- * - Each dataset represents a revenue category (packages, emails, chats, calls)
- * - Allows visual comparison of revenue composition across users
+ * Creates a bubble chart where:
+ * - X-axis represents dates
+ * - Y-axis represents users
+ * - Bubble size represents revenue amount
+ * - Bubble color represents revenue type (packages, emails, chats, calls)
+ * 
+ * REVIEW: If adding new service types, add new datasets to this function
  * 
  * @async
  * @param {Object} period - Period data object
  * @param {string[]} period.datesInPeriod - Array of dates in the period
  * @param {string} period.label - Display label for the period
  * @param {Array<Object>} users - Array of user objects
- * @returns {Promise<void>} - basically just so it has a return
- * REVIEW if we add more packages or services then this needs to mannualy created
+ * @returns {Promise<void>}
+ * 
  * @example
- * await showRadarChart(
+ * await showBubbleChart(
  *   { datesInPeriod: ['2024-01-01'], label: '2024-01-01' },
  *   [{ id: 1, first_name: 'John', last_name: 'Doe' }]
  * );
  */
-async function showRadarChart(period, users) {
-    const radarContainer = document.getElementById('radar-chart-container');
-    const radarCanvas = document.getElementById('radar-chart');
+async function showBubbleChart(period, users) {
+    const bubbleContainer = document.getElementById('bubble-chart-container');
+    const bubbleCanvas = document.getElementById('bubble-chart');
     const datesInPeriod = period.datesInPeriod;
     
     // Format date display
     const dateDisplay = datesInPeriod.length > 1 
         ? `${datesInPeriod[0]} to ${datesInPeriod[datesInPeriod.length - 1]}` 
-        : period.label;
+        : datesInPeriod[0];
     
-    radarContainer.style.display = 'block';
-    document.getElementById('radar-date').textContent = dateDisplay;
+    bubbleContainer.style.display = 'block';
+    document.getElementById('bubble-date').textContent = dateDisplay;
     
     // Destroy existing chart instance
-    if (radarChartInstance) {
-        radarChartInstance.destroy();
+    if (bubbleChartInstance) {
+        bubbleChartInstance.destroy();
     }
     
     // Get all dates in current range for data aggregation
     const allDatesInCurrentRange = getDatesInRange(currentStartDate, currentEndDate);
 
-    // Calculate revenue for each user in the period
-    const userRevenuePromises = users.map(async (user) => {
+    // Calculate revenue for each user on each date in the period
+    const bubbleData = {
+        packages: [],
+        emails: [],
+        chats: [],
+        calls: []
+        // REVIEW: If adding new service types, add new arrays here
+    };
+    
+    for (let userIdx = 0; userIdx < users.length; userIdx++) {
+        const user = users[userIdx];
         const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange);
-        let aggregatedRevenue = { packages: 0, emails: 0, chats: 0, calls: 0 }; // REVIEW if we add more packages or services then this needs to mannualy created
         
-        // Sum revenue across all dates in the period
-        datesInPeriod.forEach(date => {
+        datesInPeriod.forEach((date, dateIdx) => {
             const dayRevenue = revenueByDate[date];
             if (dayRevenue) {
-                aggregatedRevenue.packages += dayRevenue.packages;
-                aggregatedRevenue.emails += dayRevenue.emails;
-                aggregatedRevenue.chats += dayRevenue.chats;
-                aggregatedRevenue.calls += dayRevenue.calls;
-            }// REVIEW if we add more packages or services then this needs to mannualy created
+                // REVIEW: If adding new service types, create bubble data points here
+                if (dayRevenue.packages > 0) {
+                    bubbleData.packages.push({
+                        x: dateIdx,
+                        y: userIdx,
+                        r: Math.sqrt(dayRevenue.packages) * 5,
+                        revenue: dayRevenue.packages,
+                        date: date,
+                        user: `${user.first_name} ${user.last_name}`
+                    });
+                }
+                if (dayRevenue.emails > 0) {
+                    bubbleData.emails.push({
+                        x: dateIdx,
+                        y: userIdx,
+                        r: Math.sqrt(dayRevenue.emails) * 5,
+                        revenue: dayRevenue.emails,
+                        date: date,
+                        user: `${user.first_name} ${user.last_name}`
+                    });
+                }
+                if (dayRevenue.chats > 0) {
+                    bubbleData.chats.push({
+                        x: dateIdx,
+                        y: userIdx,
+                        r: Math.sqrt(dayRevenue.chats) * 5,
+                        revenue: dayRevenue.chats,
+                        date: date,
+                        user: `${user.first_name} ${user.last_name}`
+                    });
+                }
+                if (dayRevenue.calls > 0) {
+                    bubbleData.calls.push({
+                        x: dateIdx,
+                        y: userIdx,
+                        r: Math.sqrt(dayRevenue.calls) * 5,
+                        revenue: dayRevenue.calls,
+                        date: date,
+                        user: `${user.first_name} ${user.last_name}`
+                    });
+                }
+            }
         });
-        
-        return {
-            userId: user.id,
-            userName: `${user.first_name} ${user.last_name}`,
-            revenue: aggregatedRevenue
-        };
-    });
-    
-    const userRevenueData = await Promise.all(userRevenuePromises);
-    console.log('User revenue data for radar chart:', userRevenueData);
+    }
     
     // Create datasets for each revenue category
+    // REVIEW: If adding new service types, add new dataset objects here
     const datasets = [
         {
             label: 'Packages',
-            data: userRevenueData.map(u => u.revenue.packages),
-            backgroundColor: chartColors.packages.background,
-            borderColor: chartColors.packages.border,
-            borderWidth: 2,
-            pointBackgroundColor: chartColors.packages.point,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: chartColors.packages.border
+            data: bubbleData.packages,
+            backgroundColor: hexToRgba(getCSSVariable('--primary'), 0.6),
+            borderColor: getCSSVariable('--primary'),
+            borderWidth: 2
         },
         {
             label: 'Emails',
-            data: userRevenueData.map(u => u.revenue.emails),
-            backgroundColor: chartColors.emails.background,
-            borderColor: chartColors.emails.border,
-            borderWidth: 2,
-            pointBackgroundColor: chartColors.emails.point,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: chartColors.emails.border
+            data: bubbleData.emails,
+            backgroundColor: hexToRgba(getCSSVariable('--pending'), 0.6),
+            borderColor: getCSSVariable('--pending'),
+            borderWidth: 2
         },
         {
             label: 'Chats',
-            data: userRevenueData.map(u => u.revenue.chats),
-            backgroundColor: chartColors.chats.background,
-            borderColor: chartColors.chats.border,
-            borderWidth: 2,
-            pointBackgroundColor: chartColors.chats.point,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: chartColors.chats.border
+            data: bubbleData.chats,
+            backgroundColor: hexToRgba(getCSSVariable('--secondary'), 0.6),
+            borderColor: getCSSVariable('--secondary'),
+            borderWidth: 2
         },
         {
             label: 'Calls',
-            data: userRevenueData.map(u => u.revenue.calls),
-            backgroundColor: chartColors.calls.background,
-            borderColor: chartColors.calls.border,
-            borderWidth: 2,
-            pointBackgroundColor: chartColors.calls.point,
-            pointBorderColor: '#fff',
-            pointHoverBackgroundColor: '#fff',
-            pointHoverBorderColor: chartColors.calls.border
+            data: bubbleData.calls,
+            backgroundColor: hexToRgba(getCSSVariable('--info'), 0.6),
+            borderColor: getCSSVariable('--info'),
+            borderWidth: 2
         }
-        // REVIEW if we add more packages or services then this needs to mannualy created
     ];
     
-    console.log('Radar chart datasets:', datasets);
-    //FIXME make this a stacked bar chart
-    const ctx = radarCanvas.getContext('2d');
-    radarChartInstance = new Chart(ctx, {
-        type: 'radar',
+    const ctx = bubbleCanvas.getContext('2d');
+    bubbleChartInstance = new Chart(ctx, {
+        type: 'bubble',
         data: {
-            labels: userRevenueData.map(u => u.userName),
             datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
             scales: {
-                r: {
-                    beginAtZero: true,
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    },
                     ticks: {
                         callback: function(value) {
-                            return '$' + value.toFixed(2);
-                        }
-                    }
+                            return datesInPeriod[Math.floor(value)] || '';
+                        },
+                        stepSize: 1
+                    },
+                    min: -0.5,
+                    max: datesInPeriod.length - 0.5
+                },
+                y: {
+                    type: 'linear',
+                    title: {
+                        display: true,
+                        text: 'User'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            const user = users[Math.floor(value)];
+                            return user ? `${user.first_name} ${user.last_name}` : '';
+                        },
+                        stepSize: 1
+                    },
+                    min: -0.5,
+                    max: users.length - 0.5
                 }
             },
             plugins: {
@@ -765,12 +888,18 @@ async function showRadarChart(period, users) {
                 },
                 title: {
                     display: true,
-                    text: 'Revenue Breakdown by User and Type'
+                    text: 'Revenue Breakdown by User, Date, and Type'
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.dataset.label + ': $' + context.parsed.r.toFixed(2);
+                            const point = context.raw;
+                            return [
+                                `User: ${point.user}`,
+                                `Date: ${point.date}`,
+                                `Type: ${context.dataset.label}`,
+                                `Revenue: $${point.revenue.toFixed(2)}`
+                            ];
                         }
                     }
                 }
@@ -786,12 +915,15 @@ async function showRadarChart(period, users) {
 // ============================================================================
 
 /**
- * Aggregate daily revenue data into weekly or monthly periods
+ * Aggregate daily revenue data into weekly, monthly, or yearly periods
  * 
  * Takes daily revenue data and aggregates it based on the selected date type:
  * - Daily (1): Returns data as-is
  * - Weekly (7): Groups by week starting on Sunday
  * - Monthly (30): Groups by calendar month
+ * - Yearly (365): Groups by calendar year
+ * 
+ * REVIEW: If adding new service types, ensure they are included in the aggregation
  * 
  * @param {Array<Object>} aggregatedDatabyDay - Daily revenue data
  * @param {Array<Object>} aggregatedDatabyDay[].date - Date string
@@ -800,8 +932,7 @@ async function showRadarChart(period, users) {
  * @param {number} aggregatedDatabyDay[].emails - Email revenue
  * @param {number} aggregatedDatabyDay[].chats - Chat revenue
  * @param {number} aggregatedDatabyDay[].calls - Call revenue
- * REVIEW if we add more packages or services then this needs to mannualy created
- * @param {string} dateType - Aggregation type ('1', '7', or '30')
+ * @param {string} dateType - Aggregation type ('1', '7', '30', or '365')
  * @returns {Array<Object>} Aggregated data by period
  * @returns {string} [].label - Period label for display
  * @returns {number} [].total - Aggregated total revenue
@@ -809,8 +940,8 @@ async function showRadarChart(period, users) {
  * @returns {number} [].emails - Aggregated email revenue
  * @returns {number} [].chats - Aggregated chat revenue
  * @returns {number} [].calls - Aggregated call revenue
- * REVIEW if we add more packages or services then this needs to mannualy created
  * @returns {string[]} [].datesInPeriod - Array of dates included in period
+ * @returns {Object} [].subCategories - Sub-category breakdown (days/weeks/months)
  * 
  * @example
  * const weeklyData = aggregateDataByPeriod(dailyData, '7');
@@ -820,7 +951,7 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
     const type = parseInt(dateType);
     
     // For daily view, return data as-is with single-date periods
-    if (type !== 7 && type !== 30) { 
+    if (type === 1) { 
         return aggregatedDatabyDay.map(d => ({
             label: d.date,
             total: d.total,
@@ -828,7 +959,8 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
             emails: d.emails,
             chats: d.chats,
             calls: d.calls,
-            datesInPeriod: [d.date]
+            datesInPeriod: [d.date],
+            subCategories: {}
         }));
     }
 
@@ -837,17 +969,24 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
     // Aggregate data into periods
     aggregatedDatabyDay.forEach(day => {
         const dateObj = new Date(day.date);
-        let key = day.date; 
+        let key = day.date;
+        let subCategory = '';
 
         if (type === 7) {
             // Weekly: Calculate Sunday (start of week) as period key
-            const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
+            const dayOfWeek = dateObj.getDay();
             const weekStart = new Date(dateObj);
             weekStart.setDate(dateObj.getDate() - dayOfWeek);
-            key = formatDate(weekStart); 
+            key = formatDate(weekStart);
+            subCategory = getDayOfWeek(day.date);
         } else if (type === 30) {
             // Monthly: Use YYYY-MM as period key
             key = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0');
+            subCategory = getWeekOfMonth(day.date);
+        } else if (type === 365) {
+            // Yearly: Use YYYY as period key
+            key = String(dateObj.getFullYear());
+            subCategory = getMonthName(day.date);
         }
 
         // Initialize period if not exists
@@ -859,7 +998,20 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
                 emails: 0,
                 chats: 0,
                 calls: 0,
-                datesInPeriod: [] 
+                datesInPeriod: [],
+                subCategories: {}
+                // REVIEW: If adding new service types, initialize them here
+            };
+        }
+
+        // Initialize sub-category if not exists
+        if (subCategory && !aggregated[key].subCategories[subCategory]) {
+            aggregated[key].subCategories[subCategory] = {
+                packages: 0,
+                emails: 0,
+                chats: 0,
+                calls: 0
+                // REVIEW: If adding new service types, initialize them here
             };
         }
 
@@ -870,6 +1022,16 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
         aggregated[key].chats += day.chats;
         aggregated[key].calls += day.calls;
         aggregated[key].datesInPeriod.push(day.date);
+        
+        // Sum revenue for sub-category
+        if (subCategory) {
+            aggregated[key].subCategories[subCategory].packages += day.packages;
+            aggregated[key].subCategories[subCategory].emails += day.emails;
+            aggregated[key].subCategories[subCategory].chats += day.chats;
+            aggregated[key].subCategories[subCategory].calls += day.calls;
+        }
+        
+        // REVIEW: If adding new service types, add them to the summation above
     });
 
     console.log('Aggregated periods:', aggregated);
@@ -879,11 +1041,15 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
         d.datesInPeriod.sort(); // Sort dates chronologically
         
         // Create display-friendly labels
-        const displayLabel = (type === 7) 
-            ? `Week of ${d.datesInPeriod[0]}` 
-            : (type === 30) 
-                ? d.label 
-                : d.label;
+        let displayLabel = d.label;
+        if (type === 7) {
+            displayLabel = `Week of ${d.datesInPeriod[0]}`;
+        } else if (type === 30) {
+            const date = new Date(d.label + '-01');
+            displayLabel = `${getMonthName(formatDate(date))} ${date.getFullYear()}`;
+        } else if (type === 365) {
+            displayLabel = d.label;
+        }
                 
         return {
             label: displayLabel,
@@ -892,7 +1058,8 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
             emails: parseFloat(d.emails.toFixed(2)),
             chats: parseFloat(d.chats.toFixed(2)),
             calls: parseFloat(d.calls.toFixed(2)),
-            datesInPeriod: d.datesInPeriod
+            datesInPeriod: d.datesInPeriod,
+            subCategories: d.subCategories
         };
     }).sort((a, b) => {
         // Sort by earliest date in period for chronological order
@@ -905,26 +1072,28 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Main Revenue Chart (Line Graph)
+// SECTION: Main Revenue Chart (Stacked Bar Chart)
 // ============================================================================
 
 /**
  * Render the main aggregate revenue chart for all clients
  * 
- * Creates an interactive line chart showing total revenue over time with:
+ * Creates a stacked bar chart showing revenue over time with:
+ * - Sub-category stacking (days of week, weeks of month, months of year)
  * - Trendline for visual analysis
- * - Click-to-drill-down functionality (opens radar chart)
+ * - Click-to-drill-down functionality (opens bubble chart)
  * - Tooltip showing revenue breakdown
  * - Responsive design
  * 
- * The chart aggregates data by the selected period (daily/weekly/monthly)
- * and displays total revenue across all users.
+ * The chart aggregates data by the selected period and displays revenue
+ * broken down by sub-categories based on the period type.
  * 
- * FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
+ * REVIEW: If adding new service types, add them to the datasets array
+ * 
  * @async
  * @param {Array<Object>} users - Array of user objects with revenue data
  * @param {string[]} dates - Array of dates in the selected range
- * @param {string} dateType - Aggregation type ('1', '7', or '30')
+ * @param {string} dateType - Aggregation type ('1', '7', '30', or '365')
  * @returns {Promise<void>}
  * 
  * @example
@@ -961,62 +1130,114 @@ async function renderMainClientChart(users, dates, dateType) {
             emails: parseFloat(emails.toFixed(2)),
             chats: parseFloat(chats.toFixed(2)),
             calls: parseFloat(calls.toFixed(2))
+            // REVIEW: If adding new service types, add them here
         };
     });
 
-    // Aggregate by selected period (daily/weekly/monthly)
+    // Aggregate by selected period (daily/weekly/monthly/yearly)
     const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay, dateType);
 
     const chartLabels = aggregatedData.map(d => d.label);
-    const chartTotals = aggregatedData.map(d => d.total);//FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
-    const chartPackages = aggregatedData.map(d=>d.packageCost);
-    //make datasets
-    datasets= [
-        { //NOTE thisis just so we can have a trendline
-            label:'totals',
-            data:chartTotals,
-            backgroundColor: 'rgba(0, 0, 0, 0)', 
-            trendlineLinear: {
-                    colorMin: String(getCSSVariable(--text)),
-                    colorMax: String(getCSSVariable(--text)),
-                    lineStyle: "solid",
-                    width: 2
-                }
-        },
-        {
-            label:'Packages',
-            data:chartPackages,
-            backgroundColor:chartColors.packages.border
-        },
-        {
-            label:'Emails',
-            data: aggregatedData.map(d=>d.email_cost_overage), //FIXME I don''t think this is right
-            backgroundColor:chartColors.emails.border
-        },
-        {
-            label:'Chats',
-            data:aggregatedData.map(d=>d.dailyChatCosts),
-            backgroundColor:chartColors.chats.border
-        },
-        {
-            label:'Calls',
-            data:aggregatedData.map(d=>d.dailyCallsCosts),
-            backgroundColor:chartColors.calls.border
+    
+    // Create datasets based on period type
+    const datasets = [];
+    const type = parseInt(dateType);
+    
+    if (type === 1) {
+        // Daily view - show services as separate datasets
+        // REVIEW: If adding new service types, add new dataset objects here
+        datasets.push({
+            label: 'Packages',
+            data: aggregatedData.map(d => d.packages),
+            backgroundColor: chartColors.packages.border,
+            stack: 'revenue'
+        });
+        datasets.push({
+            label: 'Emails',
+            data: aggregatedData.map(d => d.emails),
+            backgroundColor: chartColors.emails.border,
+            stack: 'revenue'
+        });
+        datasets.push({
+            label: 'Chats',
+            data: aggregatedData.map(d => d.chats),
+            backgroundColor: chartColors.chats.border,
+            stack: 'revenue'
+        });
+        datasets.push({
+            label: 'Calls',
+            data: aggregatedData.map(d => d.calls),
+            backgroundColor: chartColors.calls.border,
+            stack: 'revenue'
+        });
+    } else {
+        // Weekly/Monthly/Yearly view - show sub-categories
+        // Get all unique sub-category names
+        const subCategoryNames = new Set();
+        aggregatedData.forEach(period => {
+            Object.keys(period.subCategories).forEach(cat => subCategoryNames.add(cat));
+        });
+        
+        // Sort sub-categories
+        const sortedSubCategories = Array.from(subCategoryNames).sort((a, b) => {
+            if (type === 7) {
+                // Sort days of week
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return days.indexOf(a) - days.indexOf(b);
+            } else if (type === 30) {
+                // Sort weeks
+                const weekNum = (w) => parseInt(w.replace('Week ', ''));
+                return weekNum(a) - weekNum(b);
+            } else if (type === 365) {
+                // Sort months
+                const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+                return months.indexOf(a) - months.indexOf(b);
+            }
+            return 0;
+        });
+        
+        // Create a dataset for each sub-category
+        sortedSubCategories.forEach((subCat, idx) => {
+            datasets.push({
+                label: subCat,
+                data: aggregatedData.map(d => {
+                    const subCatData = d.subCategories[subCat];
+                    if (!subCatData) return 0;
+                    // REVIEW: If adding new service types, add them to this summation
+                    return parseFloat((subCatData.packages + subCatData.emails + 
+                                     subCatData.chats + subCatData.calls).toFixed(2));
+                }),
+                backgroundColor: subCategoryColors[idx % subCategoryColors.length],
+                stack: 'revenue'
+            });
+        });
+    }
+    
+    // Add transparent dataset for trendline
+    datasets.push({
+        label: 'Trend',
+        data: aggregatedData.map(d => d.total),
+        backgroundColor: 'rgba(0, 0, 0, 0)',
+        borderColor: getCSSVariable('--text'),
+        borderWidth: 2,
+        type: 'line',
+        fill: false,
+        pointRadius: 0,
+        trendlineLinear: {
+            colorMin: getCSSVariable('--text'),
+            colorMax: getCSSVariable('--text'),
+            lineStyle: "dotted",
+            width: 2
         }
-    ]
+    });
+
     mainChartInstance = new Chart(ctx, {
-        //FIXME make this a stacked barchart such that if it is weekly it is stacked by day of the week and if it si by month it is stacked by week and if it is year it is stacked by month
         type: 'bar',
         data: {
             labels: chartLabels,
-            datasets: datasets,
-            trendlineLinear: {
-                lineStyle: "dotted",//REVIEW just to see if this is a diffrent line
-                width: 2
-                }
-            }
+            datasets: datasets
         },
-        
         options: {
             responsive: true,
             maintainAspectRatio: true,
@@ -1025,13 +1246,12 @@ async function renderMainClientChart(users, dates, dateType) {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedPeriod = aggregatedData[index];
-                    await showRadarChart(clickedPeriod, users); 
-                    //FIXME - make this a bubble chart
+                    await showBubbleChart(clickedPeriod, users);
                 }
             },
             scales: {
                 x: {
-                    stacked:true,
+                    stacked: true,
                     title: {
                         display: true,
                         text: 'Date'
@@ -1042,7 +1262,7 @@ async function renderMainClientChart(users, dates, dateType) {
                     }
                 },
                 y: {
-                    stacked:true,
+                    stacked: true,
                     beginAtZero: true,
                     title: {
                         display: true,
@@ -1058,36 +1278,196 @@ async function renderMainClientChart(users, dates, dateType) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Total Revenue (All Clients) - Click points to see breakdown' 
+                    text: 'Total Revenue (All Clients) - Click bars to see breakdown'
                 },
                 tooltip: {
                     callbacks: {
                         title: function(context) {
                             const index = context[0].dataIndex;
-                            const periodData = aggregatedData[index]; 
+                            const periodData = aggregatedData[index];
                             if (periodData.datesInPeriod && periodData.datesInPeriod.length > 1) {
                                 return `Period: ${periodData.datesInPeriod[0]} to ${periodData.datesInPeriod[periodData.datesInPeriod.length - 1]}`;
                             }
                             return 'Date: ' + context[0].label;
                         },
-                        afterLabel: function(context) {
-                            const index = context.dataIndex;
+                        footer: function(context) {
+                            const index = context[0].dataIndex;
                             const data = aggregatedData[index];
-                            return [
-                                'Packages: $' + data.packages.toFixed(2),
-                                'Emails: $' + data.emails.toFixed(2),
-                                'Chats: $' + data.chats.toFixed(2),
-                                'Calls: $' + data.calls.toFixed(2)
-                            ];
-                        },
-                        label: function(context) {
-                            return 'Total: $' + context.parsed.y.toFixed(2);
+                            return 'Total: $' + data.total.toFixed(2);
                         }
                     }
+                },
+                legend: {
+                    display: true,
+                    position: 'bottom'
                 }
             }
         }
     });
+}
+
+//!SECTION
+
+// ============================================================================
+// SECTION: Service Detail Modal
+// ============================================================================
+
+/**
+ * Show detailed service records in a modal when stat card is clicked
+ * 
+ * Fetches and displays all records for a specific service type within
+ * the selected date range for the current user.
+ * 
+ * REVIEW: If adding new service types, add new cases to the switch statement
+ * and create corresponding fetch logic
+ * 
+ * @async
+ * @param {string} serviceType - Type of service ('packages', 'emails', 'chats', 'calls')
+ * @param {number} userId - User ID to query
+ * @param {string[]} dates - Array of dates in range
+ * @returns {Promise<void>}
+ */
+async function showServiceDetail(serviceType, userId, dates) {
+    const modal = document.getElementById('service-detail-modal');
+    const modalTitle = document.getElementById('service-modal-title');
+    const modalBody = document.getElementById('service-modal-body');
+    
+    modalTitle.textContent = `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Details`;
+    modalBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading data...</p></div>';
+    modal.style.display = 'block';
+    
+    try {
+        let records = [];
+        let tableHTML = '';
+        
+        // REVIEW: If adding new service types, add new case here
+        switch(serviceType) {
+            case 'packages':
+                records = await fetchData("manual_charges", 
+                    ["user_id", "cost", "name", "frequency"], 
+                    { user_id: userId });
+                
+                tableHTML = `
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Package Name</th>
+                                <th>Frequency</th>
+                                <th>Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(r => `
+                                <tr>
+                                    <td>${r.name || 'Unnamed'}</td>
+                                    <td>${r.frequency}</td>
+                                    <td>$${parseFloat(r.cost).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                break;
+                
+            case 'emails':
+                records = await fetchData("AI_Email_Records", 
+                    ["user_id", "updated_at", "subject", "from_email"], 
+                    { user_id: userId });
+                
+                tableHTML = `
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>From</th>
+                                <th>Subject</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(r => `
+                                <tr>
+                                    <td>${new Date(r.updated_at).toLocaleString()}</td>
+                                    <td>${r.from_email || 'N/A'}</td>
+                                    <td>${r.subject || 'No Subject'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                break;
+                
+            case 'chats':
+                records = await fetchData("AI_Chat_Data", 
+                    ["user_id", "created_date", "conversation_id"], 
+                    { user_id: userId });
+                
+                tableHTML = `
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Conversation ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(r => `
+                                <tr>
+                                    <td>${new Date(r.created_date).toLocaleString()}</td>
+                                    <td>${r.conversation_id || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                break;
+                
+            case 'calls':
+                records = await fetchData("Call_Data", 
+                    ["user_id", "created_at", "duration"], 
+                    { user_id: userId });
+                
+                tableHTML = `
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Duration (minutes)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${records.map(r => `
+                                <tr>
+                                    <td>${new Date(r.created_at).toLocaleString()}</td>
+                                    <td>${parseFloat(r.duration || 0).toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                break;
+                
+            default:
+                tableHTML = '<p>Service type not recognized.</p>';
+        }
+        
+        if (records.length === 0) {
+            modalBody.innerHTML = '<p class="no-data">No records found for this period.</p>';
+        } else {
+            modalBody.innerHTML = tableHTML;
+        }
+        
+    } catch (error) {
+        console.error('Error loading service details:', error);
+        modalBody.innerHTML = '<p class="error">Error loading data. Please try again.</p>';
+    }
+}
+
+/**
+ * Close the service detail modal
+ */
+function closeServiceModal() {
+    const modal = document.getElementById('service-detail-modal');
+    modal.style.display = 'none';
 }
 
 //!SECTION
@@ -1098,8 +1478,6 @@ async function renderMainClientChart(users, dates, dateType) {
 
 /**
  * Load and display the users table with revenue data
- * 
- * NOTE NOT THE FUNCTION TO SHOW USERS VISUAL ONLY THE TABLE PART
  * 
  * This function:
  * 1. Fetches all users with role="user"
@@ -1137,6 +1515,9 @@ async function loadUsers() {
         }
 
         const dates = getDatesInRange(currentStartDate, currentEndDate);
+        
+        // Store globally for stat card drill-down
+        allDatesInRange = dates;
 
         // Calculate stats for all users concurrently
         const statsPromises = users.map(async user => {
@@ -1155,6 +1536,9 @@ async function loadUsers() {
 
         // Sort by revenue (highest first)
         usersWithStats.sort((a, b) => b.totalRevenue - a.totalRevenue);
+        
+        // Store globally for stat card drill-down
+        allUsersData = usersWithStats;
 
         // Populate table
         tbody.innerHTML = '';
@@ -1199,12 +1583,13 @@ async function loadUsers() {
  * Display detailed revenue breakdown for a specific user
  * 
  * Shows:
- * - Summary statistics (total revenue by category)
- * - Stacked bar chart of daily revenue (emails, chats, calls)
+ * - Summary statistics (total revenue by category) - clickable for detail view
+ * - Aggregated chart by period type (daily/weekly/monthly/yearly)
  * - List of active manual packages with pricing
  * 
- * Note: Packages are shown separately as they're constant daily charges,
- * while other categories vary by usage.
+ * The chart aggregates by the selected date type, matching the main chart.
+ * 
+ * REVIEW: If adding new service types, add new stat cards and update chart logic
  * 
  * @async
  * @param {Object} user - User object with full details
@@ -1240,40 +1625,113 @@ async function showUserDetail(user) {
         // Get revenue breakdown by date
         const revenueByDate = await getRevenueByDateForUser(user.id, dates);
         
-        // Prepare chart datasets (exclude packages as they're constant)
-        const labels = dates;
-        const datasets = [
-            {
-                label: 'Emails',
-                data: labels.map(date => parseFloat(revenueByDate[date].emails.toFixed(2))),
-                backgroundColor: chartColors.emails.border
-            },
-            {
-                label: 'Chats',
-                data: labels.map(date => parseFloat(revenueByDate[date].chats.toFixed(2))),
-                backgroundColor: chartColors.chats.border
-            },
-            {
-                label: 'Calls',
-                data: labels.map(date => parseFloat(revenueByDate[date].calls.toFixed(2))),
+        // Aggregate by selected period type
+        const aggregatedDatabyDay = dates.map(date => ({
+            date: date,
+            total: parseFloat((revenueByDate[date].packages + revenueByDate[date].emails + 
+                             revenueByDate[date].chats + revenueByDate[date].calls).toFixed(2)),
+            packages: parseFloat(revenueByDate[date].packages.toFixed(2)),
+            emails: parseFloat(revenueByDate[date].emails.toFixed(2)),
+            chats: parseFloat(revenueByDate[date].chats.toFixed(2)),
+            calls: parseFloat(revenueByDate[date].calls.toFixed(2))
+            // REVIEW: If adding new service types, add them here
+        }));
+        
+        const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay, currentDateType);
+        const labels = aggregatedData.map(d => d.label);
+        
+        // Create datasets based on period type
+        const datasets = [];
+        const type = parseInt(currentDateType);
+        
+        if (type === 1) {
+            // Daily view - show services as separate datasets
+            // REVIEW: If adding new service types, add new dataset objects here
+            datasets.push({
+                label: 'Packages',
+                data: aggregatedData.map(d => d.packages),
                 backgroundColor: chartColors.packages.border
-            }
-        ];
+            });
+            datasets.push({
+                label: 'Emails',
+                data: aggregatedData.map(d => d.emails),
+                backgroundColor: chartColors.emails.border
+            });
+            datasets.push({
+                label: 'Chats',
+                data: aggregatedData.map(d => d.chats),
+                backgroundColor: chartColors.chats.border
+            });
+            datasets.push({
+                label: 'Calls',
+                data: aggregatedData.map(d => d.calls),
+                backgroundColor: chartColors.calls.border
+            });
+        } else {
+            // Weekly/Monthly/Yearly view - show sub-categories
+            const subCategoryNames = new Set();
+            aggregatedData.forEach(period => {
+                Object.keys(period.subCategories).forEach(cat => subCategoryNames.add(cat));
+            });
+            
+            const sortedSubCategories = Array.from(subCategoryNames).sort((a, b) => {
+                if (type === 7) {
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    return days.indexOf(a) - days.indexOf(b);
+                } else if (type === 30) {
+                    const weekNum = (w) => parseInt(w.replace('Week ', ''));
+                    return weekNum(a) - weekNum(b);
+                } else if (type === 365) {
+                    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                    return months.indexOf(a) - months.indexOf(b);
+                }
+                return 0;
+            });
+            
+            sortedSubCategories.forEach((subCat, idx) => {
+                datasets.push({
+                    label: subCat,
+                    data: aggregatedData.map(d => {
+                        const subCatData = d.subCategories[subCat];
+                        if (!subCatData) return 0;
+                        // REVIEW: If adding new service types, add them to this summation
+                        return parseFloat((subCatData.packages + subCatData.emails + 
+                                         subCatData.chats + subCatData.calls).toFixed(2));
+                    }),
+                    backgroundColor: subCategoryColors[idx % subCategoryColors.length]
+                });
+            });
+        }
 
         // Calculate totals for summary statistics
         const totals = {
-            packages: labels.reduce((sum, date) => sum + revenueByDate[date].packages, 0),
-            emails: datasets[0].data.reduce((sum, val) => sum + val, 0),
-            chats: datasets[1].data.reduce((sum, val) => sum + val, 0),
-            calls: datasets[2].data.reduce((sum, val) => sum + val, 0)
+            packages: dates.reduce((sum, date) => sum + revenueByDate[date].packages, 0),
+            emails: dates.reduce((sum, date) => sum + revenueByDate[date].emails, 0),
+            chats: dates.reduce((sum, date) => sum + revenueByDate[date].chats, 0),
+            calls: dates.reduce((sum, date) => sum + revenueByDate[date].calls, 0)
+            // REVIEW: If adding new service types, add them to totals calculation
         };
         totals.total = totals.packages + totals.emails + totals.chats + totals.calls;
 
-        // Update stat cards
-        document.getElementById('stat-packages').textContent = `$${totals.packages.toFixed(2)}`;
-        document.getElementById('stat-emails').textContent = `$${totals.emails.toFixed(2)}`;
-        document.getElementById('stat-chats').textContent = `$${totals.chats.toFixed(2)}`;
-        document.getElementById('stat-calls').textContent = `$${totals.calls.toFixed(2)}`;
+        // Update stat cards with click handlers
+        // REVIEW: If adding new service types, add new stat card updates here
+        const statPackages = document.getElementById('stat-packages');
+        statPackages.textContent = `$${totals.packages.toFixed(2)}`;
+        statPackages.onclick = () => showServiceDetail('packages', user.id, dates);
+        
+        const statEmails = document.getElementById('stat-emails');
+        statEmails.textContent = `$${totals.emails.toFixed(2)}`;
+        statEmails.onclick = () => showServiceDetail('emails', user.id, dates);
+        
+        const statChats = document.getElementById('stat-chats');
+        statChats.textContent = `$${totals.chats.toFixed(2)}`;
+        statChats.onclick = () => showServiceDetail('chats', user.id, dates);
+        
+        const statCalls = document.getElementById('stat-calls');
+        statCalls.textContent = `$${totals.calls.toFixed(2)}`;
+        statCalls.onclick = () => showServiceDetail('calls', user.id, dates);
+        
         document.getElementById('stat-total').textContent = `$${totals.total.toFixed(2)}`;
 
         // Render stacked bar chart
@@ -1315,25 +1773,17 @@ async function showUserDetail(user) {
                     tooltip: {
                         callbacks: {
                             title: function(context) {
+                                const index = context[0].dataIndex;
+                                const periodData = aggregatedData[index];
+                                if (periodData.datesInPeriod && periodData.datesInPeriod.length > 1) {
+                                    return `Period: ${periodData.datesInPeriod[0]} to ${periodData.datesInPeriod[periodData.datesInPeriod.length - 1]}`;
+                                }
                                 return 'Date: ' + context[0].label;
                             },
-                            afterLabel: function(context) {
-                                const date = context.label;
-                                const dayData = revenueByDate[date];
-                                return [
-                                    'Emails: $' + dayData.emails.toFixed(2),
-                                    'Chats: $' + dayData.chats.toFixed(2),
-                                    'Calls: $' + dayData.calls.toFixed(2)
-                                ];
-                            },
                             footer: function(context) {
-                                const date = context[0].label;
-                                const dayData = revenueByDate[date];
-                                const total = dayData.emails + dayData.chats + dayData.calls;
-                                return 'Total: $' + total.toFixed(2);
-                            },
-                            label: function() {
-                                return '';
+                                const index = context[0].dataIndex;
+                                const data = aggregatedData[index];
+                                return 'Total: $' + data.total.toFixed(2);
                             }
                         }
                     },
@@ -1397,32 +1847,23 @@ async function showUserDetail(user) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Nav
-// FIXME chang to sidebar navigation
+// SECTION: Navigation
 // ============================================================================
 
 /**
- * Switch between Clients and Commissions tabs
- * 
- * Handles tab navigation by:
- * - Updating active tab styling
- * - Showing/hiding appropriate content sections
- * 
- * @param {string} tabName - Tab identifier ('clients' or 'commissions')
- * @returns {void}
- * 
- * @example
- * switchTab('clients'); // Shows clients tab
- * switchTab('commissions'); // Shows commissions tab
+ * Open the sidebar navigation
  */
 function openNav() {
-  document.getElementById("mySidenav").style.width = "250px";
-  document.getElementById("content").style.marginLeft = "250px";
+    document.getElementById("mySidenav").style.width = "250px";
+    document.getElementById("content").style.marginLeft = "250px";
 }
 
+/**
+ * Close the sidebar navigation
+ */
 function closeNav() {
-  document.getElementById("mySidenav").style.width = "0";
-  document.getElementById("content").style.marginLeft= "0";
+    document.getElementById("mySidenav").style.width = "0";
+    document.getElementById("content").style.marginLeft = "0";
 }
 
 //!SECTION
@@ -1437,7 +1878,7 @@ function closeNav() {
  * Sets up:
  * - Default date range (last Sunday to today)
  * - Event listeners for date inputs and controls
- * - Tab navigation
+ * - Modal close handlers
  * - Initial data load
  * 
  * @listens DOMContentLoaded
@@ -1483,23 +1924,24 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUsers();
         // Hide detail views on reload
         document.getElementById('user-detail-view').style.display = 'none'; 
-        document.getElementById('radar-chart-container').style.display = 'none'; //FIXME - make this a bubblechart
+        document.getElementById('bubble-chart-container').style.display = 'none';
     });
 
-    // Tab navigation handlers
-    const clientsTab = document.getElementById('clients-tab');
-    const commissionsTab = document.getElementById('commissions-tab');
+    // Modal close handlers
+    const modal = document.getElementById('service-detail-modal');
+    const closeBtn = document.querySelector('.close-modal');
     
-    if (clientsTab) {
-        clientsTab.addEventListener('click', () => switchTab('clients'));
+    if (closeBtn) {
+        closeBtn.onclick = closeServiceModal;
     }
     
-    if (commissionsTab) {
-        commissionsTab.addEventListener('click', () => switchTab('commissions'));
-    }
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeServiceModal();
+        }
+    };
 
     // Initialize application
-    switchTab('clients');
     loadUsers();
 });
 
@@ -1509,4 +1951,4 @@ document.addEventListener('DOMContentLoaded', () => {
  * ============================================================================
  * END OF APPLICATION
  * ============================================================================
- */
+ */  

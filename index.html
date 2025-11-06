@@ -12,156 +12,185 @@
         <script type="module" src="app.js"></script>
     </head>
     <body>
-        <!--FIXME make this a grid or flexbox or something?-->
-        <!--SECTION Header-->
+        <!-- SECTION Header -->
         <header>
-            <h1>C2AI</h1>
-            <!--TODO add logo its downloaded as an .svg but maybe figure out how to use it directly from the drive-->
-            <div class="company-buttons">
-                <button id="companyname-button" class="btn-primary" value="company" commandfor="changeCompany" command="setcompany('companyname')">Company name here</button> <!--TODO:you will also need to create thejs to change the company -->
+            <div class="header-content">
+                <div class="header-left">
+                    <span class="menu-icon" onclick="openNav()">&#9776;</span>
+                    <h1>C2AI Revenue Dashboard</h1>
+                </div>
+                <div class="company-buttons">
+                    <button id="companyname-button" class="btn-primary">Company Name</button>
+                </div>
             </div>
         </header>
-        <!--!SECTION -->
+        <!-- !SECTION -->
         
-        <!--SECTION sidebar-->
-        <div class = "sidebar">
+        <!-- SECTION Sidebar -->
+        <div id="mySidenav" class="sidebar">
             <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
             <a href="#clients-content">Clients</a>
-            <a href="#commissions-content">Commisions</a>
-            <!--TODO: Could add a contact thing here-->
+            <a href="#commissions-content">Commissions</a>
         </div>
-        <!--SECTION-->
+        <!-- !SECTION -->
 
-        <!-- SECTION Clients Tab -->
-        <div id="clients-content" class="content">
-            <h1>Clients</h1>
+        <!-- SECTION Main Content -->
+        <div id="content" class="content">
             
-            <!-- SECTION User Form -->
-            <div id="userform" class="form-section">
-                <label for="start-date">Start Date:</label>
-                <input type="date" id="start-date" name="start-date">
-                <label for="end-date">End Date:</label>
-                <input type="date" id="end-date" name="end-date">
-                <label for="date-type">Group by:</label>
-                <select name="date-type" id="date-type">
-                    <option value="1" selected>Daily</option>
-                    <option value="7">Weekly</option>
-                    <option value="30">Monthly</option>
-                    <option value="365">Yearly</option>
-                </select>
-                <button id="load-users" class="btn-primary">Load Users</button>
-            </div>
-            <!-- !SECTION -->
-
-            <!-- SECTION Main Revenue Chart -->
-            <!-- This chart aggregates revenue across all clients and responds to the "Group by" selector above -->
-            <div id="main-client-chart" class="card">
-                <div class="chart-container">
-                    <canvas id="main-revenue-chart"></canvas>
-                </div>
-            </div>
-            <!-- !SECTION -->
-
-            <!-- SECTION Users Table -->
-            <div class="card">
-                <div class="table-container">
-                    <table id="users-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
-                                <th>Email</th>
-                                <th>Revenue</th>
-                                <th>Packages</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-tbody">
-                            <tr>
-                                <td colspan="6" class="loading">
-                                    <div class="spinner"></div>
-                                    <p>Loading users...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- !SECTION -->
-
-            <!-- SECTION: User Detail View -->
-            <div id="user-detail-view" style="display: none;">                
-                <header class="detail-header">
-                    <h2 id="user-detail-title">Revenue Breakdown: Client Name</h2>
-                    <p id="user-detail-subtitle">User ID:</p>
-                </header>
+            <!-- SECTION Clients Tab -->
+            <div id="clients-content" class="content-section">
+                <h1>Clients</h1>
                 
-                <!-- Stats Grid -->
-                <div id="stats-grid" class="stats-grid">
-                    <div class="stat-card">
-                        <p class="stat-label">Total Revenue</p>
-                        <p id="stat-total" class="stat-value">$0.00</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-label">Packages</p>
-                        <p id="stat-packages" class="stat-value">$0.00</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-label">Emails</p>
-                        <p id="stat-emails" class="stat-value">$0.00</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-label">Chats</p>
-                        <p id="stat-chats" class="stat-value">$0.00</p>
-                    </div>
-                    <div class="stat-card">
-                        <p class="stat-label">Calls</p>
-                        <p id="stat-calls" class="stat-value">$0.00</p>
-                    </div>
-                    <!--REVIEW if we add more packages or services then this needs to mannualy created-->
+                <!-- SECTION Date Range Form -->
+                <div id="userform" class="form-section">
+                    <label for="start-date">Start Date:</label>
+                    <input type="date" id="start-date" name="start-date">
                     
+                    <label for="end-date">End Date:</label>
+                    <input type="date" id="end-date" name="end-date">
+                    
+                    <label for="date-type">Group by:</label>
+                    <select name="date-type" id="date-type">
+                        <option value="1" selected>Daily</option>
+                        <option value="7">Weekly</option>
+                        <option value="30">Monthly</option>
+                        <option value="365">Yearly</option>
+                    </select>
+                    
+                    <button id="load-users" class="btn-primary">Load Users</button>
                 </div>
+                <!-- !SECTION -->
 
-                <!-- Revenue Chart -->
-                <div class="card chart-card">
-                    <h3>Revenue Breakdown by Date</h3>
+                <!-- SECTION Main Revenue Chart (Stacked Bar Chart) -->
+                <div id="main-client-chart" class="card">
                     <div class="chart-container">
-                        <canvas id="revenue-chart"></canvas>
+                        <canvas id="main-revenue-chart"></canvas>
                     </div>
                 </div>
+                <!-- !SECTION -->
 
-                <!-- Packages Card -->
-                <div id="packages-card" class="card" style="display: none;">
-                    <h3>Active Manual Packages</h3>
-                    <div id="packages-grid" class="packages-grid">
-                        <!-- Package items will be dynamically inserted here -->
+                <!-- SECTION Users Table -->
+                <div class="card">
+                    <div class="table-container">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Email</th>
+                                    <th>Revenue</th>
+                                    <th>Packages</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr>
+                                    <td colspan="6" class="loading">
+                                        <div class="spinner"></div>
+                                        <p>Loading users...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+                <!-- !SECTION -->
 
-            </div> 
+                <!-- SECTION User Detail View -->
+                <div id="user-detail-view" style="display: none;">                
+                    <header class="detail-header">
+                        <h2 id="user-detail-title">Revenue Breakdown: Client Name</h2>
+                        <p id="user-detail-subtitle">User ID:</p>
+                    </header>
+                    
+                    <!-- Stats Grid with Clickable Cards -->
+                    <div id="stats-grid" class="stats-grid">
+                        <div class="stat-card">
+                            <p class="stat-label">Total Revenue</p>
+                            <p id="stat-total" class="stat-value">$0.00</p>
+                        </div>
+                        <div class="stat-card clickable">
+                            <p class="stat-label">Packages</p>
+                            <p id="stat-packages" class="stat-value">$0.00</p>
+                            <p class="stat-hint">Click for details</p>
+                        </div>
+                        <div class="stat-card clickable">
+                            <p class="stat-label">Emails</p>
+                            <p id="stat-emails" class="stat-value">$0.00</p>
+                            <p class="stat-hint">Click for details</p>
+                        </div>
+                        <div class="stat-card clickable">
+                            <p class="stat-label">Chats</p>
+                            <p id="stat-chats" class="stat-value">$0.00</p>
+                            <p class="stat-hint">Click for details</p>
+                        </div>
+                        <div class="stat-card clickable">
+                            <p class="stat-label">Calls</p>
+                            <p id="stat-calls" class="stat-value">$0.00</p>
+                            <p class="stat-hint">Click for details</p>
+                        </div>
+                        <!-- REVIEW: If adding new service types, add new stat cards here -->
+                    </div>
+
+                    <!-- Revenue Chart (Aggregated by Period) -->
+                    <div class="card chart-card">
+                        <h3>Revenue Breakdown by Period</h3>
+                        <div class="chart-container">
+                            <canvas id="revenue-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Packages Card -->
+                    <div id="packages-card" class="card" style="display: none;">
+                        <h3>Active Manual Packages</h3>
+                        <div id="packages-grid" class="packages-grid">
+                            <!-- Package items will be dynamically inserted here -->
+                        </div>
+                    </div>
+
+                </div> 
+                <!-- !SECTION -->
+
+                <!-- SECTION Bubble Chart for Period Breakdown -->
+                <div id="bubble-chart-container" class="card chart-reserved" style="display: none;">
+                    <h3>Revenue Breakdown for <span id="bubble-date"></span></h3>
+                    <p class="chart-description">Bubble size represents revenue amount. Click legend to toggle service types.</p>
+                    <div class="chart-container bubble-container">
+                        <canvas id="bubble-chart"></canvas>
+                    </div>
+                </div>
+                <!-- !SECTION -->
+            </div>
             <!-- !SECTION -->
-
-           <!-- SECTION: Daily Revenue Chart -->
-            <div id="radar-chart-container" class="card chart-reserved" style="display: none;">
-                <h3>Revenue Breakdown for <span id="radar-date"></span></h3>
-                <div class="chart-container radar-container">
-                    <canvas id="radar-chart"></canvas>
+            
+            <!-- SECTION Commissions Tab -->
+            <div id="commissions-content" class="content-section" style="display: none;">
+                <h1>Commissions</h1>
+                <div class="card">
+                    <p>Commissions functionality coming soon...</p>
                 </div>
             </div>
             <!-- !SECTION -->
+            
         </div>
         <!-- !SECTION -->
-        
-        <!-- SECTION Commissions Tab -->
-        <div id="commissions-content" class="content" style="display: none;">
-            <h1>Commissions</h1>
-            <div class="card">
-                <p>Commissions functionality coming soon...</p>
+
+        <!-- SECTION Service Detail Modal -->
+        <div id="service-detail-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="service-modal-title">Service Details</h2>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body" id="service-modal-body">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
             </div>
         </div>
         <!-- !SECTION -->
+
+        <footer>
+            <p>&copy; 2024 C2AI. All rights reserved.</p>
+        </footer>
     </body>
-    <footer>
-        <!-- TODO: add legal stuff -->
-    </footer>
 </html>
