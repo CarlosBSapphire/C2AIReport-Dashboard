@@ -229,7 +229,7 @@ const getDatesInRange = (startDate, endDate) => {
     
     while (current <= end) {
         dates.push(formatDate(current));
-        current.setDate(current.getDate() + 1);
+        current.setDate(current.getDate());
     }
     return dates;
 }
@@ -1025,7 +1025,8 @@ async function renderMainClientChart(users, dates, dateType) {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
                     const clickedPeriod = aggregatedData[index];
-                    await showRadarChart(clickedPeriod, users); //FIXME - make this a bubble chart
+                    await showRadarChart(clickedPeriod, users); 
+                    //FIXME - make this a bubble chart
                 }
             },
             scales: {
@@ -1097,6 +1098,8 @@ async function renderMainClientChart(users, dates, dateType) {
 
 /**
  * Load and display the users table with revenue data
+ * 
+ * NOTE NOT THE FUNCTION TO SHOW USERS VISUAL ONLY THE TABLE PART
  * 
  * This function:
  * 1. Fetches all users with role="user"
