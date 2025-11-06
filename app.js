@@ -918,7 +918,8 @@ async function showBubbleChart(period, users) {
             data: bubbleData.packages,
             backgroundColor: hexToRgba(getCSSVariable('--primary'), 0.6),
             borderColor: getCSSVariable('--primary'),
-            borderWidth: 2
+            borderWidth: 2,
+            hidden:true
         },
         {
             label: 'Emails',
