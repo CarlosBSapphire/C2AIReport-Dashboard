@@ -5,12 +5,12 @@
  * 
  * PERFORMANCE OPTIMIZATIONS:
  * --------------------------
- * ✅ Multi-level caching (session + file persistence)
- * ✅ Smart cache invalidation by tags
- * ✅ Table-specific TTLs (static data cached longer)
- * ✅ Pre-loading of critical data
- * ✅ Compression support
- * ✅ Performance metrics tracking
+ *  Multi-level caching (session + file persistence)
+ *  Smart cache invalidation by tags
+ *  Table-specific TTLs (static data cached longer)
+ *  Pre-loading of critical data
+ *  Compression support
+ *  Performance metrics tracking
  * 
  * EXPECTED IMPROVEMENTS:
  * ----------------------
@@ -174,7 +174,7 @@ const sessionCache = {
             
             if (result.success) {
                 const duration = performance.now() - startTime;
-                console.log(`✅ Cache SET: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)${result.persisted ? ' [PERSISTED]' : ''}`);
+                console.log(` Cache SET: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)${result.persisted ? ' [PERSISTED]' : ''}`);
                 if (result.tags && result.tags.length > 0) {
                     console.log(`   Tags: ${result.tags.join(', ')}`);
                 }
@@ -182,7 +182,7 @@ const sessionCache = {
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache set error:", error);
+            console.error("Cache set error:", error);
             return false;
         }
     },
@@ -207,16 +207,16 @@ const sessionCache = {
             if (result.success) {
                 performanceMetrics.cacheHits++;
                 const ageMinutes = (result.age / 60000).toFixed(1);
-                console.log(`🎯 Cache HIT: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms, age: ${ageMinutes}min, source: ${result.source})`);
+                console.log(`Cache HIT: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms, age: ${ageMinutes}min, source: ${result.source})`);
                 return result.data;
             } else {
                 performanceMetrics.cacheMisses++;
-                console.log(`❌ Cache MISS: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)`);
+                console.log(`Cache MISS: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)`);
                 return null;
             }
         } catch (error) {
             performanceMetrics.cacheMisses++;
-            console.error("❌ Cache get error:", error);
+            console.error("Cache get error:", error);
             return null;
         }
     },
@@ -246,7 +246,7 @@ const sessionCache = {
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache clear by tag error:", error);
+            console.error("Cache clear by tag error:", error);
             return false;
         }
     },
@@ -264,14 +264,14 @@ const sessionCache = {
             const result = await response.json();
             
             if (key) {
-                console.log(`🗑️  Cleared cache key: ${key}`);
+                console.log(`Cleared cache key: ${key}`);
             } else {
-                console.log(`🗑️  Cleared ALL cache`);
+                console.log(`Cleared ALL cache`);
             }
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache clear error:", error);
+            console.error("Cache clear error:", error);
             return false;
         }
     },
@@ -386,7 +386,7 @@ async function fetchData(tableName, columns, filters = {}) {
     
     // Cache miss - fetch from API
     const apiStartTime = performance.now();
-    console.log(`📡 API CALL: ${tableName} with filters:`, filters);
+    console.log(`API CALL: ${tableName} with filters:`, filters);
     
     // Add date filters based on table name
     const enhancedFilters = { ...filters };
@@ -446,7 +446,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const apiDuration = performance.now() - apiStartTime;
     performanceMetrics.apiCalls++;
     performanceMetrics.totalLoadTime += apiDuration;
-    console.log(`📡 API Response: ${tableName} (${apiDuration.toFixed(2)}ms, ${finalData.length} records)`);
+    console.log(` API Response: ${tableName} (${apiDuration.toFixed(2)}ms, ${finalData.length} records)`);
     
     // Cache the result with table-specific settings
     await sessionCache.set(cacheKey, finalData, tableName);
@@ -459,7 +459,7 @@ async function fetchData(tableName, columns, filters = {}) {
  * This runs in the background and populates the cache before user interaction
  */
 async function preloadCriticalData() {
-    console.log('🚀 Pre-loading critical data...');
+    console.log('Pre-loading critical data...');
     const preloadStart = performance.now();
     
     try {
@@ -470,12 +470,12 @@ async function preloadCriticalData() {
         );
         
         const preloadDuration = performance.now() - preloadStart;
-        console.log(`✅ Pre-loaded ${users.length} users (${preloadDuration.toFixed(2)}ms)`);
-        console.log(`📊 Cache stats:`, sessionCache.getStats());
+        console.log(` Pre-loaded ${users.length} users (${preloadDuration.toFixed(2)}ms)`);
+        console.log(`Cache stats:`, sessionCache.getStats());
         
         return users;
     } catch (error) {
-        console.error('❌ Error pre-loading data:', error);
+        console.error('Error pre-loading data:', error);
         return [];
     }
 }
@@ -641,7 +641,7 @@ const chartColors = {
 const subCategoryColors = [
     '#00356f', '#0467d2', '#008387', '#46c2c6',
     '#f59e0b', '#2563eb', '#3b82f6'
-];
+]; //FIXME get colors from css
 
 //!SECTION
 
@@ -1827,12 +1827,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // OPTIMIZED: Revenue tab date change event handlers (smart cache invalidation)
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
-        sessionCache.clearByTag('date-dependent'); // ✅ Only clear date-dependent data!
+        sessionCache.clearByTag('date-dependent'); //  Only clear date-dependent data!
     });
     
     endDateInput.addEventListener('change', (e) => {
         currentEndDate = e.target.value;
-        sessionCache.clearByTag('date-dependent'); // ✅ Only clear date-dependent data!
+        sessionCache.clearByTag('date-dependent'); //  Only clear date-dependent data!
     });
 
     currentDateTypeInput.addEventListener('change', (e) => {
@@ -1843,12 +1843,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // OPTIMIZED: Client tab date change event handlers (smart cache invalidation)
     clientStartDateInput.addEventListener('change', (e) => {
         clientStartDate = e.target.value;
-        sessionCache.clearByTag('date-dependent'); // ✅ Only clear date-dependent data!
+        sessionCache.clearByTag('date-dependent'); //  Only clear date-dependent data!
     });
     
     clientEndDateInput.addEventListener('change', (e) => {
         clientEndDate = e.target.value;
-        sessionCache.clearByTag('date-dependent'); // ✅ Only clear date-dependent data!
+        sessionCache.clearByTag('date-dependent'); //  Only clear date-dependent data!
     });
 
     clientDateTypeInput.addEventListener('change', (e) => {
@@ -1857,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // OPTIMIZED: Revenue tab load button handler
     loadButton.addEventListener('click', async () => {
-        await sessionCache.clearByTag('date-dependent'); // ✅ Smart invalidation
+        await sessionCache.clearByTag('date-dependent'); //  Smart invalidation
         
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
@@ -1882,7 +1882,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // OPTIMIZED: Client tab load button handler
     loadClientsButton.addEventListener('click', async () => {
-        await sessionCache.clearByTag('date-dependent'); // ✅ Smart invalidation
+        await sessionCache.clearByTag('date-dependent'); //  Smart invalidation
         loadUsers();
         hideOtherCharts('none');
     });
@@ -1906,8 +1906,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // OPTIMIZED: Pre-load critical data in background
     preloadCriticalData().then(() => {
-        console.log('🎉 Pre-loading complete!');
-        console.log('📊 Final cache stats:', sessionCache.getStats());
+        console.log('Pre-loading complete');
+        console.log('Final cache stats:', sessionCache.getStats());
     });
 
     // Initialize application
@@ -1938,8 +1938,8 @@ document.addEventListener('DOMContentLoaded', () => {
             await renderMainClientChart(usersWithStats, dates, currentDateType);
             
             // Log final performance stats
-            console.log('🏁 Initialization complete!');
-            console.log('📊 Final Performance Stats:', sessionCache.getStats());
+            console.log('Initialization complete');
+            console.log('Final Performance Stats:', sessionCache.getStats());
         }
     })();
 
@@ -1949,20 +1949,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * ============================================================================
- * END OF OPTIMIZED APPLICATION
- * ============================================================================
- * 
- * Performance improvements in this version:
- * - Multi-level caching (session + file)
- * - Smart cache invalidation by tags
- * - Table-specific TTLs
- * - Pre-loading of critical data
- * - Performance metrics tracking
- * 
- * Expected results:
- * - Initial load: 40-60% faster
- * - Date changes: 70-80% faster
- * - Page reloads: 90% faster
- * - Cache hit rate: 80-95%
+ * END OF APPLICATION
  * ============================================================================
  */
