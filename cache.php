@@ -470,7 +470,7 @@ switch ($method) {
         http_response_code(405);
         echo json_encode([
             'success' => false,
-            'error' => 'Method not allowed. Supported: GET, POST, DELETE'
+            'error' => 'Method not allowed. Supported: POST'
         ]);
         break;
 }
