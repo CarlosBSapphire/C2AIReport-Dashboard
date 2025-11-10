@@ -5,13 +5,13 @@
  * 
  * PERFORMANCE OPTIMIZATIONS:
  * --------------------------
- * ✅ Multi-level caching (session + file persistence)
- * ✅ Smart cache invalidation by tags
- * ✅ Table-specific TTLs (static data cached longer)
- * ✅ Pre-loading of critical data
- * ✅ Compression support
- * ✅ Performance metrics tracking
- * ✅ BULK DATA FETCHING - Load all users' data in 5 calls instead of 4×N calls
+ *  Multi-level caching (session + file persistence)
+ *  Smart cache invalidation by tags
+ *  Table-specific TTLs (static data cached longer)
+ *  Pre-loading of critical data
+ *  Compression support
+ *  Performance metrics tracking
+ *  BULK DATA FETCHING - Load all users' data in 5 calls instead of 4×N calls
  * 
  * EXPECTED IMPROVEMENTS:
  * ----------------------
@@ -73,7 +73,7 @@ let performanceMetrics = {
     totalLoadTime: 0
 };
 
-// ✅ NEW: Bulk data cache
+//  NEW: Bulk data cache
 let bulkDataCache = {
     allPackages: null,
     allDailyEmailCosts: null,
@@ -147,12 +147,12 @@ const sessionCache = {
             
             if (result.success) {
                 const duration = performance.now() - startTime;
-                console.log(`✅ Cache SET: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)${result.persisted ? ' [PERSISTED]' : ''}`);
+                console.log(` Cache SET: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)${result.persisted ? ' [PERSISTED]' : ''}`);
             }
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache set error:", error);
+            console.error(" Cache set error:", error);
             return false;
         }
     },
@@ -170,16 +170,16 @@ const sessionCache = {
             if (result.success) {
                 performanceMetrics.cacheHits++;
                 const ageMinutes = (result.age / 60000).toFixed(1);
-                console.log(`🎯 Cache HIT: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms, age: ${ageMinutes}min, source: ${result.source})`);
+                console.log(` Cache HIT: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms, age: ${ageMinutes}min, source: ${result.source})`);
                 return result.data;
             } else {
                 performanceMetrics.cacheMisses++;
-                console.log(`❌ Cache MISS: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)`);
+                console.log(` Cache MISS: ${key.substring(0, 50)}... (${duration.toFixed(2)}ms)`);
                 return null;
             }
         } catch (error) {
             performanceMetrics.cacheMisses++;
-            console.error("❌ Cache get error:", error);
+            console.error(" Cache get error:", error);
             return null;
         }
     },
@@ -203,7 +203,7 @@ const sessionCache = {
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache clear by tag error:", error);
+            console.error(" Cache clear by tag error:", error);
             return false;
         }
     },
@@ -225,7 +225,7 @@ const sessionCache = {
             
             return result.success;
         } catch (error) {
-            console.error("❌ Cache clear error:", error);
+            console.error(" Cache clear error:", error);
             return false;
         }
     },
@@ -320,7 +320,7 @@ async function fetchData(tableName, columns, filters = {}) {
     }
     
     const apiStartTime = performance.now();
-    console.log(`📡 API CALL: ${tableName} with filters:`, filters);
+    console.log(` API CALL: ${tableName} with filters:`, filters);
     
     const enhancedFilters = { ...filters };
     if (currentStartDate && currentEndDate) {
@@ -376,7 +376,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const apiDuration = performance.now() - apiStartTime;
     performanceMetrics.apiCalls++;
     performanceMetrics.totalLoadTime += apiDuration;
-    console.log(`📡 API Response: ${tableName} (${apiDuration.toFixed(2)}ms, ${finalData.length} records)`);
+    console.log(` API Response: ${tableName} (${apiDuration.toFixed(2)}ms, ${finalData.length} records)`);
     
     await sessionCache.set(cacheKey, finalData, tableName);
     
@@ -384,10 +384,10 @@ async function fetchData(tableName, columns, filters = {}) {
 }
 
 /**
- * ✅ NEW: Bulk load all revenue data for all users in ONE call per table
+ *  NEW: Bulk load all revenue data for all users in ONE call per table
  */
 async function loadBulkRevenueData() {
-    console.log('🚀 Loading BULK revenue data for all users...');
+    console.log(' Loading BULK revenue data for all users...');
     const bulkStart = performance.now();
     
     try {
@@ -409,7 +409,7 @@ async function loadBulkRevenueData() {
         };
         
         const bulkDuration = performance.now() - bulkStart;
-        console.log(`✅ Bulk data loaded in ${bulkDuration.toFixed(2)}ms`);
+        console.log(` Bulk data loaded in ${bulkDuration.toFixed(2)}ms`);
         console.log(`   - Packages: ${allPackages.length}`);
         console.log(`   - Email records: ${allDailyEmailCosts.length}`);
         console.log(`   - Chat records: ${allDailyChatCosts.length}`);
@@ -417,13 +417,13 @@ async function loadBulkRevenueData() {
         
         return bulkDataCache;
     } catch (error) {
-        console.error('❌ Error loading bulk data:', error);
+        console.error(' Error loading bulk data:', error);
         return null;
     }
 }
 
 async function preloadCriticalData() {
-    console.log('🚀 Pre-loading critical data...');
+    console.log(' Pre-loading critical data...');
     const preloadStart = performance.now();
     
     try {
@@ -433,12 +433,12 @@ async function preloadCriticalData() {
         );
         
         const preloadDuration = performance.now() - preloadStart;
-        console.log(`✅ Pre-loaded ${users.length} users (${preloadDuration.toFixed(2)}ms)`);
-        console.log(`📊 Cache stats:`, sessionCache.getStats());
+        console.log(` Pre-loaded ${users.length} users (${preloadDuration.toFixed(2)}ms)`);
+        console.log(` Cache stats:`, sessionCache.getStats());
         
         return users;
     } catch (error) {
-        console.error('❌ Error pre-loading data:', error);
+        console.error(' Error pre-loading data:', error);
         return [];
     }
 }
@@ -446,13 +446,13 @@ async function preloadCriticalData() {
 //!SECTION
 
 // ============================================================================
-// SECTION: Package Statistics Functions (✅ OPTIMIZED FOR BULK)
+// SECTION: Package Statistics Functions ( OPTIMIZED FOR BULK)
 // ============================================================================
 
 async function getPackageStatsForUser(userId, allPackages = null) {
     let packages;
     if (allPackages) {
-        // ✅ Filter from bulk data (no API call!)
+        //  Filter from bulk data (no API call!)
         packages = allPackages.filter(pkg => pkg.user_id === userId);
     } else {
         // Fallback to individual API call
@@ -474,7 +474,7 @@ async function getRevenueByDateForUser(userId, dates, bulkData = null) {
     let packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts;
     
     if (bulkData) {
-        // ✅ Filter from bulk data (no API calls!)
+        //  Filter from bulk data (no API calls!)
         packages = bulkData.allPackages.filter(pkg => pkg.user_id === userId);
         dailyEmailCosts = bulkData.allDailyEmailCosts.filter(rec => rec.user_id === userId);
         dailyChatCosts = bulkData.allDailyChatCosts.filter(rec => rec.user_id === userId);
@@ -621,8 +621,7 @@ const chartColors = {
 };
 
 const subCategoryColors = [
-    '#00356f', '#0467d2', '#008387', '#46c2c6',
-    '#f59e0b', '#2563eb', '#3b82f6'
+    '#00356f', '#0467d2', '#008387', '#46c2c6', '#f59e0b', '#2563eb', '#3b82f6' //NOTE: if the colors change theen this need to be changed manually
 ];
 
 //!SECTION
@@ -710,7 +709,7 @@ async function showBubbleChart(period, users) {
         calls: []
     };
     
-    // ✅ Use bulk data if available
+    //  Use bulk data if available
     for (let userIdx = 0; userIdx < users.length; userIdx++) {
         const user = users[userIdx];
         const revenueByDate = await getRevenueByDateForUser(user.id, allDatesInCurrentRange, bulkDataCache);
@@ -981,7 +980,7 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
 // ============================================================================
 
 async function renderMainClientChart(users, dates, dateType) {
-    console.log('🎨 Rendering main chart...')
+    console.log(' Rendering main chart...')
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
     
     if (mainChartInstance) {
@@ -990,7 +989,7 @@ async function renderMainClientChart(users, dates, dateType) {
 
     hideOtherCharts('main');
 
-    // ✅ Use bulk data if available
+    //  Use bulk data if available
     const revenuePromises = users.map(user => getRevenueByDateForUser(user.id, dates, bulkDataCache));
     const userRevenueByDate = await Promise.all(revenuePromises);
 
@@ -1412,11 +1411,11 @@ function closeServiceModal() {
 //!SECTION
 
 // ============================================================================
-// SECTION: User Table Loading (✅ OPTIMIZED WITH BULK DATA)
+// SECTION: User Table Loading ( OPTIMIZED WITH BULK DATA)
 // ============================================================================
 
 async function loadUsers() {
-    console.log("📊 Loading users with BULK data...");
+    console.log(" Loading users with BULK data...");
     const tbody = document.getElementById('users-tbody');
     
     try {
@@ -1426,8 +1425,8 @@ async function loadUsers() {
         currentStartDate = clientStartDate;
         currentEndDate = clientEndDate;
         
-        // ✅ Step 1: Load users
-        const users = await fetchData("users", 
+        //  Step 1: Load users
+        var users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
@@ -1439,14 +1438,20 @@ async function loadUsers() {
             currentEndDate = tempEnd;
             return;
         }
+        users = users.reduce((acc, user) => {
+            if (!user.email.includes('ianf+test')) {
+                acc.push(user);
+            }
+            return acc;
+        }, []);
 
-        // ✅ Step 2: Load ALL revenue data in bulk (4 calls total instead of 4×N)
+        //  Step 2: Load ALL revenue data in bulk (4 calls total instead of 4×N)
         await loadBulkRevenueData();
 
         const dates = getDatesInRange(clientStartDate, clientEndDate);
         allDatesInRange = dates;
 
-        // ✅ Step 3: Process all users using bulk data (NO additional API calls!)
+        //  Step 3: Process all users using bulk data (NO additional API calls!)
         const statsPromises = users.map(async user => {
             const packageStats = await getPackageStatsForUser(user.id, bulkDataCache.allPackages);
             const totalRevenue = await getTotalRevenueForUser(user.id, dates, bulkDataCache);
@@ -1485,8 +1490,8 @@ async function loadUsers() {
         currentStartDate = tempStart;
         currentEndDate = tempEnd;
 
-        console.log("✅ Users loaded successfully with BULK data");
-        console.log("📊 Final stats:", sessionCache.getStats());
+        console.log(" Users loaded successfully with BULK data");
+        console.log(" Final stats:", sessionCache.getStats());
 
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="6" class="error">Error loading users: ${error.message}</td></tr>`;
@@ -1525,7 +1530,7 @@ async function showUserDetail(user) {
         
         const dates = getDatesInRange(clientStartDate, clientEndDate);
         
-        // ✅ Use bulk data if available
+        //  Use bulk data if available
         const revenueByDate = await getRevenueByDateForUser(user.id, dates, bulkDataCache);
         
         const aggregatedDatabyDay = dates.map(date => ({
@@ -1746,7 +1751,7 @@ async function showUserDetail(user) {
 
 function openSidebar(name) {
     name=String(name);
-    console.log(`📂 Opening tab: ${name}`)
+    console.log(` Opening tab: ${name}`)
     const availableTabs = ['revenue-content', 'client-content', 'commissions-content']; 
     
     if (!availableTabs.includes(name)) {
@@ -1771,11 +1776,11 @@ function openSidebar(name) {
 //!SECTION
 
 // ============================================================================
-// SECTION: Initialization (✅ BULK OPTIMIZED)
+// SECTION: Initialization ( BULK OPTIMIZED)
 // ============================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Initializing dashboard with BULK loading...');
+    console.log(' Initializing dashboard with BULK loading...');
     
     const startDateInput = document.getElementById("start-date");
     const endDateInput = document.getElementById("end-date");
@@ -1837,7 +1842,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // No cache clearing needed
     });
     
-    // ✅ Revenue tab load button with bulk data
+    //  Revenue tab load button with bulk data
     loadButton.addEventListener('click', async () => {
         await sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
@@ -1865,7 +1870,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // ✅ Client tab load button with bulk data
+    //  Client tab load button with bulk data
     loadClientsButton.addEventListener('click', async () => {
         await sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
@@ -1889,14 +1894,14 @@ document.addEventListener('DOMContentLoaded', () => {
     deployBackbutton();
 
     preloadCriticalData().then(() => {
-        console.log('🎉 Pre-loading complete!');
-        console.log('📊 Cache stats:', sessionCache.getStats());
+        console.log(' Pre-loading complete!');
+        console.log(' Cache stats:', sessionCache.getStats());
     });
 
     loadUsers();
     openSidebar("revenue-content");
 
-    // ✅ Initialize with bulk data
+    //  Initialize with bulk data
     (async () => {
         const users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
@@ -1919,8 +1924,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             await renderMainClientChart(usersWithStats, dates, currentDateType);
             
-            console.log('🏁 Initialization complete!');
-            console.log('📊 Final Performance Stats:', sessionCache.getStats());
+            console.log(' Initialization complete!');
+            console.log(' Final Performance Stats:', sessionCache.getStats());
         }
     })();
 
