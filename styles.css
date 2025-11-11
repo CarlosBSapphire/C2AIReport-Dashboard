@@ -289,8 +289,7 @@ header h1 {
 
 .content {
     transition: margin-left 0.3s;
-    padding: 2rem;
-    max-width: 1400px;
+    
     margin: 0 auto;
     padding-left: 16%;
     
@@ -298,6 +297,7 @@ header h1 {
 
 .content-section {
     animation: fadeIn 0.3s ease-in;
+    
 }
 
 @keyframes fadeIn {
