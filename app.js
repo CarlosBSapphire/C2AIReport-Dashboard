@@ -427,10 +427,16 @@ async function preloadCriticalData() {
     const preloadStart = performance.now();
     
     try {
-        const users = await fetchData("users", 
+        var users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
+        users = users.reduce((acc, user) => {
+            if (!user.email.includes('ianf+test')) {
+                acc.push(user);
+            }
+            return acc;
+        }, []);
         
         const preloadDuration = performance.now() - preloadStart;
         console.log(` Pre-loaded ${users.length} users (${preloadDuration.toFixed(2)}ms)`);
@@ -634,6 +640,7 @@ function hideOtherCharts(chartToShow) {
     const mainChart = document.getElementById('main-client-chart');
     const bubbleChart = document.getElementById('bubble-chart-container');
     const userDetail = document.getElementById('user-detail-view');
+    //REVIEW - add more charts
     
     mainChart.style.display = 'none';
     bubbleChart.style.display = 'none';
@@ -1754,22 +1761,36 @@ function openSidebar(name) {
     console.log(` Opening tab: ${name}`)
     const availableTabs = ['revenue-content', 'client-content', 'commissions-content']; 
     
-    if (!availableTabs.includes(name)) {
-        console.warn(`Attempted to open unknown tab: ${name}`);
-        return;
-    }
+    // if (!availableTabs.includes(name)) {
+    //     console.warn(`Attempted to open unknown tab: ${name}`);
+    //     return;
+    // }
 
-    availableTabs.forEach(tabName => {
-        const thisTab = document.getElementById(tabName);
-        if (thisTab) {
-            thisTab.style.display = (tabName === name) ? 'block' : 'none';
-        } else {
-            console.error(`Element with ID '${tabName}' not found.`);
-        }
-    });
+    // availableTabs.forEach(tabName => {
+    //     const thisTab = document.getElementById(tabName);
+    //     if (thisTab) {
+    //         thisTab.style.display = (tabName === name) ? 'block' : 'none';
+    //     } else {
+    //         console.error(`Element with ID '${tabName}' not found.`);
+    //     }
+    // });
     
-    if (name !== 'revenue-content') {
-        hideOtherCharts('none');
+    // if (name !== 'revenue-content') {
+    //     hideOtherCharts('none');
+    // }
+
+    const thisTab = document.getElementById(name);
+    thisTab.style.display = 'block';
+    switch (name){
+        case 'revenue-content':
+            hideOtherCharts('main');
+            break;
+        case 'client-content':
+            hideOtherCharts('user');
+            break;
+        case 'commissions-content':
+            hideOtherCharts('none');
+            //REVIEW - add to this when we put something in commision
     }
 }
 
@@ -1812,12 +1833,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
+        localStorage.setItem('start',JSON.stringify(currentStartDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
     });
     
     endDateInput.addEventListener('change', (e) => {
         currentEndDate = e.target.value;
+        localStorage.setItem('end',JSON.stringify(currentEndDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
     });
@@ -1828,29 +1851,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     clientStartDateInput.addEventListener('change', (e) => {
         clientStartDate = e.target.value;
+        localStorage.setItem('start',JSON.stringify(clientStartDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
     });
     
     clientEndDateInput.addEventListener('change', (e) => {
         clientEndDate = e.target.value;
+        localStorage.setItem('end',JSON.stringify(clientEndDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
     });
 
-    clientDateTypeInput.addEventListener('change', (e) => {
-        // No cache clearing needed
-    });
     
     //  Revenue tab load button with bulk data
     loadButton.addEventListener('click', async () => {
         await sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
         
-        const users = await fetchData("users", 
+        var users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
+        users = users.reduce((acc, user) => {
+            if (!user.email.includes('ianf+test')) {
+                acc.push(user);
+            }
+            return acc;
+        }, []);
         
         if (users.length > 0) {
             await loadBulkRevenueData();
@@ -1903,10 +1931,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //  Initialize with bulk data
     (async () => {
-        const users = await fetchData("users", 
+        var users = await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
+        users = users.reduce((acc, user) => {
+            if (!user.email.includes('ianf+test')) {
+                acc.push(user);
+            }
+            return acc;
+        }, []);
         
         if (users.length > 0) {
             await loadBulkRevenueData();
