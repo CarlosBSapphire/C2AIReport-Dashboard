@@ -706,7 +706,7 @@ async function showBubbleChart(period, users) {
         packages: [],
         emails: [],
         chats: [],
-        calls: []
+        calls: [] //NOTE - add more services here
     };
     
     //  Use bulk data if available
