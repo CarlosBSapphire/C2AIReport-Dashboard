@@ -86,13 +86,14 @@
                     <button id="load-users" class="btn-primary">Filter</button>
 
                     <button id="back-button" class="btn-primary" style="display: none;">Back</button>
+                <!-- FIXME make this refrence the form in the header  -->
                 </div>
                 <!-- !SECTION -->
 
                 <!-- SECTION Main Revenue Chart (Stacked Bar Chart) -->
                 <div id="main-client-chart" class="card">
                     <div class="chart-container">
-                        <canvas id="main-revenue-chart" style="display: flex-grow;"></canvas>
+                        <canvas id="main-revenue-chart" style="display: flex-grow;"onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'"></canvas>
                     </div>
                 </div>
                 <!-- !SECTION -->
@@ -161,7 +162,8 @@
                     </select>
                     
                     <button id="load-clients" class="btn-primary">Filter</button>
-                </div>
+                </div> 
+                <!-- FIXME - make this refrence the form in the header -->
                 <!-- !SECTION -->
                 
                 <div class="card">
@@ -177,7 +179,7 @@
                                     <th>Packages</th>
                                 </tr>
                             </thead>
-                            <tbody id="users-tbody">
+                            <tbody id="users-tbody" onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='default'">
                                 <tr>
                                     <td colspan="6" class="loading">
                                         <div class="spinner"></div>
