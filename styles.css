@@ -184,6 +184,12 @@ body {
     line-height: 1.6;
     min-height: 100vh;
 }
+button,
+.btn-primary,
+.stat-card.clickable,
+#users-tbody tr {
+  cursor: pointer;
+}
 
 /* ============================================================================
    SECTION 3: Header
@@ -373,7 +379,6 @@ p {
  */
 .form-section label {
     font-weight: 500;
-    color: var(--text);
     font-size: 0.95rem;
 }
 
@@ -425,7 +430,7 @@ select option {
  */
 .btn-primary {
     padding: 0.625rem 1.25rem;
-    background-color: var(--input-bg);
+    background-color: var(--primary-btn-onhover);
     color: var(--menu-text);
     border: none;
     border-radius: 0.375rem;
@@ -619,7 +624,7 @@ tbody td {
  * Chart canvas element
  */
 canvas {
-    max-width: 100%;
+    width: 100% !important;
     height: auto !important;
 }
 

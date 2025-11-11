@@ -808,7 +808,7 @@ async function showBubbleChart(period, users) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             scales: {
                 x: {
                     type: 'linear',
@@ -1115,7 +1115,7 @@ async function renderMainClientChart(users, dates, dateType) {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             onClick: async (event, activeElements) => {
                 if (activeElements.length > 0) {
                     const index = activeElements[0].index;
@@ -1619,7 +1619,7 @@ async function showUserDetail(user) {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false,
                 scales: {
                     x: {
                         stacked: true,
@@ -1808,10 +1808,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentDateTypeInput = document.getElementById("date-type");
     const loadButton = document.getElementById("load-users");
     
-    const clientStartDateInput = document.getElementById("client-start-date");
-    const clientEndDateInput = document.getElementById("client-end-date");
-    const clientDateTypeInput = document.getElementById("client-date-type");
-    const loadClientsButton = document.getElementById("load-clients");
+    const clientStartDateInput = document.getElementById("start-date");
+    const clientEndDateInput = document.getElementById("end-date");
+    const clientDateTypeInput = document.getElementById("date-type");
+    const loadClientsButton = document.getElementById("load-users");
 
     const today = new Date();
     const lastSunday = getLastSunday();
@@ -1836,6 +1836,11 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('start',JSON.stringify(currentStartDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
+        clientStartDate = e.target.value;
+        localStorage.setItem('start',JSON.stringify(clientStartDate));
+        sessionCache.clearByTag('date-dependent');
+        bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
+    
     });
     
     endDateInput.addEventListener('change', (e) => {
@@ -1843,25 +1848,18 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('end',JSON.stringify(currentEndDate));
         sessionCache.clearByTag('date-dependent');
         bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
+        clientEndDate = e.target.value;
+        localStorage.setItem('end',JSON.stringify(clientEndDate));
+        sessionCache.clearByTag('date-dependent');
+        bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
+    
     });
 
     currentDateTypeInput.addEventListener('change', (e) => {
         currentDateType = e.target.value;
     });
     
-    clientStartDateInput.addEventListener('change', (e) => {
-        clientStartDate = e.target.value;
-        localStorage.setItem('start',JSON.stringify(clientStartDate));
-        sessionCache.clearByTag('date-dependent');
-        bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
-    });
     
-    clientEndDateInput.addEventListener('change', (e) => {
-        clientEndDate = e.target.value;
-        localStorage.setItem('end',JSON.stringify(clientEndDate));
-        sessionCache.clearByTag('date-dependent');
-        bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
-    });
 
     
     //  Revenue tab load button with bulk data
