@@ -1533,7 +1533,7 @@ async function showUserDetail(user) {
         
         currentStartDate = clientStartDate;
         currentEndDate = clientEndDate;
-        currentDateType = document.getElementById('client-date-type').value;
+        currentDateType = document.getElementById('date-type').value;
         
         const dates = getDatesInRange(clientStartDate, clientEndDate);
         
