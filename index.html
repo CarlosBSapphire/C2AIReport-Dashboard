@@ -79,19 +79,19 @@
                         <p id="stat-revenue-total" class="stat-value">$0.00</p>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-label">Total Packages</p>
+                        <p class="stat-label">Total Package Revenue</p>
                         <p id="stat-revenue-packages" class="stat-value">$0.00</p>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-label">Total Emails</p>
+                        <p class="stat-label">Total Email Revenue</p>
                         <p id="stat-revenue-emails" class="stat-value">$0.00</p>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-label">Total Chats</p>
+                        <p class="stat-label">Total Chat Revenue</p>
                         <p id="stat-revenue-chats" class="stat-value">$0.00</p>
                     </div>
                     <div class="stat-card">
-                        <p class="stat-label">Total Calls</p>
+                        <p class="stat-label">Total Call Revenue</p>
                         <p id="stat-revenue-calls" class="stat-value">$0.00</p>
                     </div>
                     <!-- REVIEW If you add more service they should be listed here -->
@@ -198,21 +198,29 @@
                             <p class="stat-hint">Click for details</p>
                         </div>
                         <div class="stat-card clickable">
-                            <p class="stat-label">Emails</p>
+                            <p class="stat-label">Email Overages</p>
                             <p id="stat-emails" class="stat-value">$0.00</p>
                             <p class="stat-hint">Click for details</p>
                         </div>
                         <div class="stat-card clickable">
-                            <p class="stat-label">Chats</p>
+                            <p class="stat-label">Chat Overages</p>
                             <p id="stat-chats" class="stat-value">$0.00</p>
                             <p class="stat-hint">Click for details</p>
                         </div>
                         <div class="stat-card clickable">
-                            <p class="stat-label">Calls</p>
+                            <p class="stat-label">Call Overages</p>
                             <p id="stat-calls" class="stat-value">$0.00</p>
                             <p class="stat-hint">Click for details</p>
                         </div>
                         <!-- REVIEW: If adding new service types, add new stat cards here -->
+                    </div>
+
+                    <!-- Packages Card -->
+                    <div id="packages-card" class="card" style="display: none;">
+                        <h3>Active Packages</h3>
+                        <div id="packages-grid" class="packages-grid">
+                            <!-- Package items will be dynamically inserted here -->
+                        </div>
                     </div>
 
                     <!-- Revenue Chart (Aggregated by Period) for a Single user-->
@@ -223,13 +231,7 @@
                         </div>
                     </div>
 
-                    <!-- Packages Card -->
-                    <div id="packages-card" class="card" style="display: none;">
-                        <h3>Active Packages</h3>
-                        <div id="packages-grid" class="packages-grid">
-                            <!-- Package items will be dynamically inserted here -->
-                        </div>
-                    </div>
+                    
 
                 </div> 
                 <!-- !SECTION -->
