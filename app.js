@@ -318,7 +318,7 @@ const getMonthName = (dateString) => {
 // SECTION: Optimized Data Fetching with Smart Caching
 // ============================================================================
 
-async function fetchData(tableName, columns, filters = {}) {
+async function fetchData(tableName, columns, filters = {}, or_statement = {}) {
     const cacheKey = JSON.stringify({ tableName, columns, filters });
     
     const cached = await sessionCache.get(cacheKey, tableName);
@@ -350,7 +350,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const response = await fetch(API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table_name: tableName, columns, filters: enhancedFilters })
+        body: JSON.stringify({ table_name: tableName, columns, filters: enhancedFilters, $or: or_statement})
     });
 
     if (!response.ok) {
