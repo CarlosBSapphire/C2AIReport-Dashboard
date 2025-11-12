@@ -690,22 +690,24 @@ canvas {
    
 }
 .stat-card.clickable::after {
-    content: '\2197'; /* This is the ⇗ arrow character */
+    content: ''; /* Create the triangle with borders, not text */
     position: absolute;
-    top: 0.6rem;       /* Adjust for vertical position */
-    right: 0.75rem;    /* Adjust for horizontal position */
-    font-size: 0.9rem;
-    font-weight: bold;
-    color: var(--text-placeholders); /* Subtle color */
+    top: 0;  /* Place at the very top */
+    right: 0; /* Place at the very right */
+    width: 0;
+    height: 0;
+    border-style: solid;
+    /* Adjust '8px' to make the triangle larger or smaller */
+    border-width: 0 20px 20px 0; /* 0-top, 8px-right, 8px-bottom, 0-left */
+    border-color: transparent var(--text-placeholders) transparent transparent;
     transition: all 0.2s ease;
 }
 
 /**
- * Optional: Make the icon more obvious on hover
+ * Optional: Make the triangle more obvious on hover
  */
 .stat-card.clickable:hover::after {
-    color: var(--primary); /* Use brand color on hover */
-    transform: scale(1.1);
+    border-color: transparent var(--primary) transparent transparent; /* Use brand color on hover */
 }
 
 .stat-card.clickable:hover {
