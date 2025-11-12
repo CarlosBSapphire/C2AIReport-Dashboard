@@ -1023,6 +1023,30 @@ async function renderMainClientChart(users, dates, dateType) {
 
     const aggregatedData = aggregateDataByPeriod(aggregatedDatabyDay, dateType);
 
+    // --- Calculate totals (from our previous conversation) ---
+    const grandTotal = aggregatedData.reduce((sum, period) => sum + period.total, 0);
+    const totalPackages = aggregatedData.reduce((sum, period) => sum + period.packages, 0);
+    const totalEmails = aggregatedData.reduce((sum, period) => sum + period.emails, 0);
+    const totalChats = aggregatedData.reduce((sum, period) => sum + period.chats, 0);
+    const totalCalls = aggregatedData.reduce((sum, period) => sum + period.calls, 0);
+
+    // --- NEW: Find the Top Spender ---
+    // The 'users' array passed into this function already has the 'totalRevenue' for each user
+    let topSpender = { first_name: 'N/A', last_name: '', totalRevenue: 0 };
+    if (users && users.length > 0) {
+        // Use reduce to find the user with the maximum totalRevenue
+        topSpender = users.reduce((max, user) => (user.totalRevenue > max.totalRevenue) ? user : max, users[0]);
+    }
+
+    // --- Update all the HTML elements by their new unique IDs ---
+    document.getElementById('stat-top-spender').textContent = `${topSpender.first_name} ${topSpender.last_name} ($${topSpender.totalRevenue.toFixed(2)})`;
+    document.getElementById('stat-revenue-total').textContent = `$${grandTotal.toFixed(2)}`;
+    document.getElementById('stat-revenue-packages').textContent = `$${totalPackages.toFixed(2)}`;
+    document.getElementById('stat-revenue-emails').textContent = `$${totalEmails.toFixed(2)}`;
+    document.getElementById('stat-revenue-chats').textContent = `$${totalChats.toFixed(2)}`;
+    document.getElementById('stat-revenue-calls').textContent = `$${totalCalls.toFixed(2)}`;
+    
+
     const chartLabels = aggregatedData.map(d => d.label);
     
     const datasets = [];
@@ -1761,16 +1785,10 @@ function openSidebar(name) {
     console.log(` Opening tab: ${name}`)
     const availableTabs = ['revenue-content', 'client-content', 'commissions-content']; 
     
-    // if (!availableTabs.includes(name)) {
-    //     console.warn(`Attempted to open unknown tab: ${name}`);
-    //     return;
-    // }
-
-    // 
-    
-    // if (name !== 'revenue-content') {
-    //     hideOtherCharts('none');
-    // }
+    if (!availableTabs.includes(name)) {
+        console.warn(`Attempted to open unknown tab: ${name}`);
+        return;
+    }
 
     const thisTab = document.getElementById(name);
     thisTab.style.display = 'block';
