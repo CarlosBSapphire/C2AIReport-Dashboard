@@ -1528,7 +1528,7 @@ async function loadUsers() {
         currentEndDate = tempEnd;
 
         console.log(" Users loaded successfully with BULK data");
-        console.log(" Final stats:", sessionCache.getStats());
+        // console.log(" Final stats:", sessionCache.getStats());
 
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="6" class="error">Error loading users: ${error.message}</td></tr>`;
