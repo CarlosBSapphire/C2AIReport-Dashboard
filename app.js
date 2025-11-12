@@ -1119,8 +1119,8 @@ async function renderMainClientChart(users, dates, dateType) {
     datasets.push({
         label: 'Trend',
         data: aggregatedData.map(d => d.total),
-        backgroundColor: 'rgba(0, 0, 0, 0)',
-        borderColor: getCSSVariable('--text'),
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
         borderWidth: 2,
         type: 'line',
         fill: false,
@@ -1132,7 +1132,8 @@ async function renderMainClientChart(users, dates, dateType) {
             width: 2,
             projection:true,
             label:{
-                percentage:true
+                // percentage:true
+                displayValue:false,
             }
         }
     });
