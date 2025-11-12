@@ -1131,10 +1131,10 @@ async function renderMainClientChart(users, dates, dateType) {
             lineStyle: "dotted",
             width: 2,
             projection:true,
-            label:{
-                // percentage:true
-                displayValue:false,
-            }
+            // label:{
+            //     percentage:true
+            //     displayValue:false,
+            // }
         }
     });
 
