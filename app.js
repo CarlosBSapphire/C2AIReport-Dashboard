@@ -258,6 +258,13 @@ const formatDate = (date) => {
         String(date.getDate()).padStart(2, '0');
 }
 
+function parseLocalDate(dateString) {
+    // Split the string and create a new Date object.
+    const parts = dateString.split('-');
+    // new Date(year, monthIndex, day) - this constructor uses local time
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+}
+
 const getLastSunday = () => {
     const today = new Date();
     const lastSunday = new Date(today);
@@ -267,8 +274,8 @@ const getLastSunday = () => {
 
 const getDatesInRange = (startDate, endDate) => {
     const dates = [];
-    const current = new Date(startDate);
-    const end = new Date(endDate);
+    const current = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
     
     while (current <= end) {
         dates.push(formatDate(current));
@@ -278,19 +285,19 @@ const getDatesInRange = (startDate, endDate) => {
 }
 
 const addDaysToDate = (dateString, days) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     date.setDate(date.getDate() + days);
     return formatDate(date);
 }
 
 const getDayOfWeek = (dateString) => {
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return daysOfWeek[date.getDay()];
 }
 
 const getWeekOfMonth = (dateString) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
     const dayOfMonth = date.getDate();
     const dayOfWeek = firstDayOfMonth.getDay();
@@ -301,7 +308,7 @@ const getWeekOfMonth = (dateString) => {
 const getMonthName = (dateString) => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June',
                    'July', 'August', 'September', 'October', 'November', 'December'];
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     return months[date.getMonth()];
 }
 
