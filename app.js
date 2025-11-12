@@ -1154,6 +1154,10 @@ async function renderMainClientChart(users, dates, dateType) {
                     await showBubbleChart(clickedPeriod, users);
                 }
             },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             scales: {
                 x: {
                     stacked: true,
@@ -1186,6 +1190,7 @@ async function renderMainClientChart(users, dates, dateType) {
                     text: 'Total Revenue (All Clients) - Click bars to see breakdown'
                 },
                 tooltip: {
+                    
                     callbacks: {
                         title: function(context) {
                             const index = context[0].dataIndex;
@@ -1357,6 +1362,7 @@ function updateModalContent() {
                 updateModalContent();
             }
         };
+
     }
     
     if (nextBtn) {
