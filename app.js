@@ -1818,6 +1818,68 @@ function openSidebar(name) {
 //!SECTION
 
 // ============================================================================
+// SECTION: CSV Export
+// ============================================================================
+
+function exportToCSV() {
+    console.log("Exporting data to CSV...");
+
+    // We use the global allUsersData, which is updated by filtering
+    const data = allUsersData;
+
+    if (!data || data.length === 0) {
+        alert("No data to export. Please filter data first.");
+        return;
+    }
+
+    // Define CSV headers
+    const headers = ["ID", "First Name", "Last Name", "Email", "Total Revenue", "Packages"];
+    
+    // Helper function to escape data for CSV (handles commas in package names)
+    const escapeCSV = (value) => {
+        if (value == null) return '';
+        let str = String(value);
+        if (str.includes(',')) {
+            // If it contains a comma, wrap it in double quotes
+            str = `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
+    // Map the data to CSV rows
+    const rows = data.map(user => 
+        [
+            user.id,
+            user.first_name,
+            user.last_name,
+            user.email,
+            user.totalRevenue.toFixed(2),
+            escapeCSV(user.packageNames) // Use the helper here
+        ].join(',')
+    );
+
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    // Create a Blob and trigger the download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) { // Check for browser support
+        const url = URL.createObjectURL(blob);
+        const date = new Date().toISOString().split('T')[0];
+        link.setAttribute('href', url);
+        link.setAttribute('download', `revenue_report_${date}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+//!SECTION
+
+// ============================================================================
 // SECTION: Initialization ( BULK OPTIMIZED)
 // ============================================================================
 
@@ -1833,6 +1895,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientEndDateInput = document.getElementById("end-date");
     const clientDateTypeInput = document.getElementById("date-type");
     const loadClientsButton = document.getElementById("load-users");
+    const exportButton = document.getElementById("export-csv");
 
     const today = new Date();
     const lastSunday = getLastSunday();
@@ -1939,6 +2002,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     deployBackbutton();
+    
+    if (exportButton) {
+        exportButton.addEventListener('click', exportToCSV);
+    }
 
     preloadCriticalData().then(() => {
         console.log(' Pre-loading complete!');
