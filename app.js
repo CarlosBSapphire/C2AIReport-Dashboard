@@ -1835,59 +1835,32 @@ function openSidebar(name) {
 
 //!SECTION
 
-// ============================================================================
-// SECTION: CSV Export
-// ============================================================================
+/**
+ * ============================================================================
+ * SECTION: Excel Export (replaces CSV Export)
+ * Uses SheetJS (xlsx.js) library, which must be included in index.html
+ * ============================================================================
+ */
 
-function exportToCSV() {
-    console.log("Exporting data to CSV...");
-
-    // We use the global allUsersData, which is updated by filtering
-    const data = allUsersData;
-
-    if (!data || data.length === 0) {
-        alert("No data to export. Please filter data first.");
-        return;
-    }
-
-    // Define CSV headers
-    const headers = ["ID", "First Name", "Last Name", "Email", "Total Revenue", "Packages"];
+// A new helper function to trigger the download
+function downloadExcelWorkbook(workbook, filename) {
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
     
-    // Helper function to escape data for CSV (handles commas in package names)
-    const escapeCSV = (value) => {
-        if (value == null) return '';
-        let str = String(value);
-        if (str.includes(',')) {
-            // If it contains a comma, wrap it in double quotes
-            str = `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-    };
-
-    // Map the data to CSV rows
-    const rows = data.map(user => 
-        [
-            user.id,
-            user.first_name,
-            user.last_name,
-            user.email,
-            user.totalRevenue.toFixed(2),
-            escapeCSV(user.packageNames) // Use the helper here
-        ].join(',')
-    );
-
-    // Combine headers and rows
-    const csvContent = [headers.join(','), ...rows].join('\n');
-
+    // Convert binary string to a typed array
+    const buf = new ArrayBuffer(wbout.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < wbout.length; i++) {
+        view[i] = wbout.charCodeAt(i) & 0xFF;
+    }
+    
     // Create a Blob and trigger the download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([buf], { type: 'application/octet-stream' });
     const link = document.createElement('a');
     
-    if (link.download !== undefined) { // Check for browser support
+    if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
-        const date = new Date().toISOString().split('T')[0];
         link.setAttribute('href', url);
-        link.setAttribute('download', `revenue_report_${date}.csv`);
+        link.setAttribute('download', filename);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
@@ -1895,7 +1868,140 @@ function exportToCSV() {
     }
 }
 
-//!SECTION
+// This is the new, powerful export function
+async function exportToExcel() {
+    console.log("Exporting full data to Excel...");
+
+    // The allUsersData (from client tab) is a good starting point for the summary
+    const summaryData = allUsersData;
+    if (!summaryData || summaryData.length === 0) {
+        alert("No summary data to export. Please filter data first.");
+        return;
+    }
+
+    try {
+        // 1. Create a new Workbook
+        const wb = XLSX.utils.book_new();
+        const date = new Date().toISOString().split('T')[0];
+        const filename = `full_revenue_report_${date}.xlsx`;
+
+        // === 2. Worksheet 1: User Summary ===
+        // This is your expanded CSV data
+        const summaryHeaders = [
+            "ID", "First Name", "Last Name", "Email", 
+            "Total Revenue", "Packages Revenue", "Emails Revenue", "Chats Revenue", "Calls Revenue",
+            "Package Count", "Package Details"
+        ];
+
+        const summaryRows = summaryData.map(user => {
+            let packageDetails = "None";
+            if (user.packages && user.packages.length > 0) {
+                packageDetails = user.packages
+                    .map(pkg => `${pkg.name || 'Unnamed'} ($${parseFloat(pkg.cost || 0).toFixed(2)}/${pkg.frequency || 'N/A'})`)
+                    .join('; ');
+            }
+            return [
+                user.id, user.first_name, user.last_name, user.email,
+                user.totalRevenue || 0, user.totalPackages || 0, user.totalEmails || 0, user.totalChats || 0, user.totalCalls || 0,
+                user.packageCount || 0, packageDetails
+            ];
+        });
+        
+        const ws_summary = XLSX.utils.aoa_to_sheet([summaryHeaders, ...summaryRows]);
+        XLSX.utils.book_append_sheet(wb, ws_summary, 'User Summary');
+
+        
+        // === 3. Worksheet 2: Revenue by Day (All Users) ===
+        // We'll calculate the daily totals for all users
+        const dates = allDatesInRange;
+        const revenueByDay = {};
+        dates.forEach(date => {
+            revenueByDay[date] = { packages: 0, emails: 0, chats: 0, calls: 0, total: 0 };
+        });
+
+        for (const user of summaryData) {
+            const userRevenueByDate = await getRevenueByDateForUser(user.id, dates, bulkDataCache);
+            dates.forEach(date => {
+                if (userRevenueByDate[date]) {
+                    revenueByDay[date].packages += userRevenueByDate[date].packages;
+                    revenueByDay[date].emails += userRevenueByDate[date].emails;
+                    revenueByDay[date].chats += userRevenueByDate[date].chats;
+                    revenueByDay[date].calls += userRevenueByDate[date].calls;
+                    revenueByDay[date].total += (
+                        userRevenueByDate[date].packages +
+                        userRevenueByDate[date].emails +
+                        userRevenueByDate[date].chats +
+                        userRevenueByDate[date].calls
+                    );
+                }
+            });
+        }
+
+        const dailyHeaders = ["Date", "Total Revenue", "Packages", "Emails", "Chats", "Calls"];
+        const dailyRows = dates.map(date => [
+            date,
+            parseFloat(revenueByDay[date].total.toFixed(2)),
+            parseFloat(revenueByDay[date].packages.toFixed(2)),
+            parseFloat(revenueByDay[date].emails.toFixed(2)),
+            parseFloat(revenueByDay[date].chats.toFixed(2)),
+            parseFloat(revenueByDay[date].calls.toFixed(2))
+        ]);
+        const ws_daily = XLSX.utils.aoa_to_sheet([dailyHeaders, ...dailyRows]);
+        XLSX.utils.book_append_sheet(wb, ws_daily, 'Revenue by Day');
+
+
+        // === 4. Get All Raw Data ===
+        // We can use the bulkDataCache that is already loaded for packages
+        const allPackages = bulkDataCache.allPackages || [];
+        
+        // For detailed logs, we'll fetch them all based on the current date range
+        // This makes sure the export matches the dashboard's filters
+        console.log("Fetching detailed logs for export...");
+        const allEmailLogs = await fetchData("AI_Email_Records", ["user_id", "updated_at", "subject", "from_email"], {});
+        const allChatLogs = await fetchData("AI_Chat_Data", ["user_id", "created_date", "conversation_id"], {});
+        const allCallLogs = await fetchData("Call_Data", ["user_id", "created_at", "duration"], {});
+
+        
+        // === 5. Worksheet 3: All Packages ===
+        const packageHeaders = ["User ID", "Package Name", "Cost", "Frequency", "Created Time"];
+        const packageRows = allPackages.map(pkg => [
+            pkg.user_id, pkg.name, pkg.cost, pkg.frequency, pkg.created_time
+        ]);
+        const ws_packages = XLSX.utils.aoa_to_sheet([packageHeaders, ...packageRows]);
+        XLSX.utils.book_append_sheet(wb, ws_packages, 'All Packages');
+
+        // === 6. Worksheet 4: All Email Logs ===
+        const emailHeaders = ["User ID", "Date", "Subject", "From"];
+        const emailRows = allEmailLogs.map(log => [
+            log.user_id, log.updated_at, log.subject, log.from_email
+        ]);
+        const ws_emails = XLSX.utils.aoa_to_sheet([emailHeaders, ...emailRows]);
+        XLSX.utils.book_append_sheet(wb, ws_emails, 'Email Logs');
+
+        // === 7. Worksheet 5: All Chat Logs ===
+        const chatHeaders = ["User ID", "Date", "Conversation ID"];
+        const chatRows = allChatLogs.map(log => [
+            log.user_id, log.created_date, log.conversation_id
+        ]);
+        const ws_chats = XLSX.utils.aoa_to_sheet([chatHeaders, ...chatRows]);
+        XLSX.utils.book_append_sheet(wb, ws_chats, 'Chat Logs');
+
+        // === 8. Worksheet 6: All Call Logs ===
+        const callHeaders = ["User ID", "Date", "Duration (min)"];
+        const callRows = allCallLogs.map(log => [
+            log.user_id, log.created_at, log.duration
+        ]);
+        const ws_calls = XLSX.utils.aoa_to_sheet([callHeaders, ...callRows]);
+        XLSX.utils.book_append_sheet(wb, ws_calls, 'Call Logs');
+
+        // === 9. Final Step: Download the Workbook ===
+        downloadExcelWorkbook(wb, filename);
+
+    } catch (error) {
+        console.error("Error exporting to Excel:", error);
+        alert("An error occurred while exporting the data. See console for details.");
+    }
+}
 
 // ============================================================================
 // SECTION: Initialization ( BULK OPTIMIZED)
@@ -2022,7 +2128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     deployBackbutton();
     
     if (exportButton) {
-        exportButton.addEventListener('click', exportToCSV);
+        exportButton.addEventListener('click', exportToExcel);
     }
 
     preloadCriticalData().then(() => {
