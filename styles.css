@@ -639,6 +639,7 @@ canvas {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--border);
+    position: relative;
 }
 
 #user-detail-title {
@@ -646,7 +647,7 @@ canvas {
 }
 
 #user-detail-subtitle {
-    color: var(--text-muted);
+    color: var(--menu-text);
     font-size: 0.95rem;
 }
 
