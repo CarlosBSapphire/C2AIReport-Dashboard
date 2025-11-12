@@ -1129,7 +1129,11 @@ async function renderMainClientChart(users, dates, dateType) {
             colorMin: getCSSVariable('--text'),
             colorMax: getCSSVariable('--text'),
             lineStyle: "dotted",
-            width: 2
+            width: 2,
+            projection:true,
+            label:{
+                percentage:true
+            }
         }
     });
 
