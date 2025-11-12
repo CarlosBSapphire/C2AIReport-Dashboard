@@ -1050,7 +1050,7 @@ async function renderMainClientChart(users, dates, dateType) {
     const chartLabels = aggregatedData.map(d => d.label);
     
 
-    z\
+    
     const datasets = [];
     const type = parseInt(dateType);
     
