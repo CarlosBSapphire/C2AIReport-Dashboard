@@ -1766,14 +1766,7 @@ function openSidebar(name) {
     //     return;
     // }
 
-    // availableTabs.forEach(tabName => {
-    //     const thisTab = document.getElementById(tabName);
-    //     if (thisTab) {
-    //         thisTab.style.display = (tabName === name) ? 'block' : 'none';
-    //     } else {
-    //         console.error(`Element with ID '${tabName}' not found.`);
-    //     }
-    // });
+    // 
     
     // if (name !== 'revenue-content') {
     //     hideOtherCharts('none');
@@ -1792,6 +1785,14 @@ function openSidebar(name) {
             hideOtherCharts('none');
             //REVIEW - add to this when we put something in commision
     }
+    availableTabs.forEach(tabName => {
+        const thisTab = document.getElementById(tabName);
+        if (thisTab) {
+            thisTab.style.display = (tabName === name) ? 'block' : 'none';
+        } else {
+            console.error(`Element with ID '${tabName}' not found.`);
+        }
+    });
 }
 
 //!SECTION
