@@ -672,6 +672,7 @@ canvas {
     text-align: center;
     box-shadow: var(--panel-shadow);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
 }
 
 .stat-card:hover {
@@ -681,6 +682,30 @@ canvas {
 
 .stat-card.clickable {
     cursor: pointer;
+    position: relative;
+    /* Outline clickable outlet */
+    /* border-width: 0 16px 16px 0;
+    border-style: solid;
+    border-color: var(--active) #fff; */
+   
+}
+.stat-card.clickable::after {
+    content: '\2197'; /* This is the ⇗ arrow character */
+    position: absolute;
+    top: 0.6rem;       /* Adjust for vertical position */
+    right: 0.75rem;    /* Adjust for horizontal position */
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-placeholders); /* Subtle color */
+    transition: all 0.2s ease;
+}
+
+/**
+ * Optional: Make the icon more obvious on hover
+ */
+.stat-card.clickable:hover::after {
+    color: var(--primary); /* Use brand color on hover */
+    transform: scale(1.1);
 }
 
 .stat-card.clickable:hover {
