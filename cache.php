@@ -1,4 +1,5 @@
 <?php
+<<<<<<< Updated upstream
 /**
  * ============================================================================
  * ENHANCED SESSION-BASED CACHE SYSTEM WITH FILE PERSISTENCE
@@ -33,6 +34,13 @@
  * 
  * ============================================================================
  */
+=======
+// cache.php - Enhanced version with file-based caching and gzip compression
+// Enable gzip compression
+if (!ob_start('ob_gzhandler')) {
+    ob_start();
+}
+>>>>>>> Stashed changes
 
 // ============================================================================
 // SECTION: Configuration
@@ -256,6 +264,16 @@ cleanupExpiredCache();
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents('php://input'), true);
 
+// Helper function to delete file cache
+function deleteFileCache($key) {
+    if (defined('USE_FILE_CACHE') && USE_FILE_CACHE) {
+        $cacheFile = CACHE_DIR . md5($key) . '.cache';
+        if (file_exists($cacheFile)) {
+            unlink($cacheFile);
+        }
+    }
+}
+
 switch ($method) {
     
     // ========================================================================
@@ -263,6 +281,7 @@ switch ($method) {
     // ========================================================================
     case 'GET':
         $key = $_GET['key'] ?? '';
+        // Max Age now passed via query param to respect variable TTL
         $maxAge = isset($_GET['maxAge']) ? intval($_GET['maxAge']) : 300000;
         
         if (empty($key)) {
@@ -291,7 +310,11 @@ switch ($method) {
             } else {
                 // Expired - remove from session
                 unset($_SESSION['cache'][$key]);
+<<<<<<< Updated upstream
                 removeCacheKeyFromTags($key);
+=======
+                deleteFileCache($key); // Delete expired file cache too
+>>>>>>> Stashed changes
             }
         }
         
@@ -336,8 +359,13 @@ switch ($method) {
     case 'POST':
         $key = $input['key'] ?? '';
         $value = $input['value'] ?? null;
+<<<<<<< Updated upstream
         $persist = $input['persist'] ?? true;
         $tags = $input['tags'] ?? [];
+=======
+        $persist = $input['persist'] ?? true; 
+        $tags = $input['tags'] ?? []; // New: Store tags
+>>>>>>> Stashed changes
         
         if (empty($key)) {
             echo json_encode([
@@ -351,12 +379,17 @@ switch ($method) {
         $cacheData = [
             'value' => $value,
             'timestamp' => time() * 1000,
+<<<<<<< Updated upstream
             'tags' => $tags
+=======
+            'tags' => $tags // Store tags
+>>>>>>> Stashed changes
         ];
         
         // LEVEL 1: Always store in session (fastest access)
         $_SESSION['cache'][$key] = $cacheData;
         
+<<<<<<< Updated upstream
         // Add to tag indexes
         addCacheTags($key, $tags);
         
@@ -369,6 +402,16 @@ switch ($method) {
             } else {
                 error_log("Cache size limit reached, file persistence skipped for key: {$key}");
             }
+=======
+        // Optionally persist to file (controlled by client via 'persist' flag)
+        if (USE_FILE_CACHE && $persist) {
+            $cacheFile = CACHE_DIR . md5($key) . '.cache';
+            // Do not store tags in file cache for simplicity, tags are for session invalidation only
+            file_put_contents($cacheFile, json_encode([
+                'value' => $value,
+                'timestamp' => time() * 1000
+            ]));
+>>>>>>> Stashed changes
         }
         
         echo json_encode([
@@ -384,7 +427,11 @@ switch ($method) {
     // ========================================================================
     case 'DELETE':
         $key = $input['key'] ?? null;
+<<<<<<< Updated upstream
         $tag = $input['tag'] ?? null;
+=======
+        $tag = $input['tag'] ?? null; // New: Clear by tag
+>>>>>>> Stashed changes
         
         if ($tag) {
             // Clear all caches with a specific tag
@@ -422,6 +469,7 @@ switch ($method) {
             $existed = isset($_SESSION['cache'][$key]);
             
             unset($_SESSION['cache'][$key]);
+<<<<<<< Updated upstream
             removeCacheKeyFromTags($key);
             
             if (USE_FILE_CACHE) {
@@ -436,6 +484,28 @@ switch ($method) {
                 'message' => $existed ? 'Cache key cleared' : 'Cache key not found',
                 'existed' => $existed
             ]);
+=======
+            deleteFileCache($key);
+            
+            echo json_encode(['success' => true, 'message' => 'Cache cleared for key']);
+            
+        } elseif ($tag) {
+            // Clear all keys matching a specific tag (Session only)
+            $clearedKeys = [];
+            foreach ($_SESSION['cache'] as $k => $cached) {
+                if (in_array($tag, $cached['tags'] ?? [])) {
+                    unset($_SESSION['cache'][$k]);
+                    deleteFileCache($k); // Also clear associated file cache
+                    $clearedKeys[] = $k;
+                }
+            }
+            
+            echo json_encode(['success' => true, 'message' => 'Cache cleared for tag', 'keys_cleared' => $clearedKeys]);
+            
+        } else {
+            // Clear all cache
+            $_SESSION['cache'] = [];
+>>>>>>> Stashed changes
             
         } else {
             // Clear ALL cache
