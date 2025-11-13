@@ -1,42 +1,7 @@
 /**
- * BIG FIXES NEEDED:
- * FIXME set everything to call tables like manual_charges or Daily_chat etc once every 5 minutes and on timechange and don't call with the user_id, just call it then filter the infor after you get it
- */
-
-
-
-
-/**
  * ============================================================================
  * CLIENT REVENUE DASHBOARD - Main Application (OPTIMIZED v5.0 - BULK LOADING)
  * ============================================================================
-<<<<<<< Updated upstream
- * 
- * PERFORMANCE OPTIMIZATIONS:
- * --------------------------
- *  Multi-level caching (session + file persistence)
- *  Smart cache invalidation by tags
- *  Table-specific TTLs (static data cached longer)
- *  Pre-loading of critical data
- *  Compression support
- *  Performance metrics tracking
- *  BULK DATA FETCHING - Load all users' data in 5 calls instead of 4×N calls
- * 
- * EXPECTED IMPROVEMENTS:
- * ----------------------
- * - Initial load: 80-95% faster (was 1.3min → now ~5-10 seconds)
- * - API calls reduced from 200+ to just 5 for 50 users
- * - Date changes: 70-80% faster (user data stays cached)
- * - Subsequent visits: 90% faster (file cache persists)
- * - Cache hit rate: 80-95%
- * 
- * @file app.js
- * @version 5.0.0 (BULK OPTIMIZED)
- * @requires Chart.js v4.4.9
- * @requires chartjs-plugin-trendline
- * 
- * ============================================================================
-=======
  * * This application provides a comprehensive revenue tracking dashboard for
  * monitoring client usage across multiple service categories (emails, chats,
  * calls, and manual packages).
@@ -54,7 +19,6 @@
  * ----------
  * API -> Cache -> Aggregation -> Chart Rendering -> User Interaction
  * * ============================================================================
->>>>>>> Stashed changes
  */
 
 // ============================================================================
@@ -93,7 +57,6 @@ let paginationState = {
 let clientStartDate = null;
 let clientEndDate = null;
 
-<<<<<<< Updated upstream
 // Performance tracking
 let performanceMetrics = {
     cacheHits: 0,
@@ -112,70 +75,11 @@ let bulkDataCache = {
 };
 
 //!SECTION
-=======
-/**
- * Cache TTLs in milliseconds (new optimization)
- * @constant {Object}
- */
-const CACHE_TTLS = {
-    'users': 3600000,        // 1 hour
-    'manual_charges': 1800000, // 30 minutes
-    'Daily_Email_Cost_Record': 1800000, 
-    'Daily_Chat_Record_Cost_Record': 1800000, 
-    'Daily_Calls_Cost_Record': 1800000, 
-    'AI_Email_Records': 1800000,  
-    'AI_Chat_Data': 1800000, 
-    'Call_Data': 1800000 
-};
-
-// !SECTION
->>>>>>> Stashed changes
 
 // ============================================================================
 // SECTION: Enhanced Session Cache with Tags and Configurable TTLs
 // ============================================================================
 
-<<<<<<< Updated upstream
-const sessionCache = {
-    ttls: {
-        'users': 3600000,
-        'manual_charges': 1800000,
-        'Daily_Email_Cost_Record': 300000,
-        'Daily_Chat_Record_Cost_Record': 300000,
-        'Daily_Calls_Cost_Record': 300000,
-        'AI_Email_Records': 180000,
-        'AI_Chat_Data': 180000,
-        'Call_Data': 180000,
-        'default': 300000
-    },
-    
-    tags: {
-        'users': ['static', 'user-data'],
-        'manual_charges': ['static', 'user-data', 'package-data'],
-        'Daily_Email_Cost_Record': ['date-dependent', 'revenue-data'],
-        'Daily_Chat_Record_Cost_Record': ['date-dependent', 'revenue-data'],
-        'Daily_Calls_Cost_Record': ['date-dependent', 'revenue-data'],
-        'AI_Email_Records': ['date-dependent', 'detail-data'],
-        'AI_Chat_Data': ['date-dependent', 'detail-data'],
-        'Call_Data': ['date-dependent', 'detail-data']
-    },
-    
-    getTTL(tableName) {
-        return this.ttls[tableName] || this.ttls.default;
-    },
-    
-    getTags(tableName) {
-        return this.tags[tableName] || [];
-    },
-    
-    shouldPersist(tableName) {
-        const tags = this.getTags(tableName);
-        return tags.includes('static');
-    },
-    
-    async set(key, value, tableName = null) {
-        const startTime = performance.now();
-=======
 /**
  * PHP-based session cache for API response data
  * * Provides methods to set, get, and clear cached data to reduce API calls
@@ -215,7 +119,6 @@ const sessionCache = {
     async set(key, value, tags = []) {
         // Determine persistence based on tags (new optimization)
         const persist = !tags.includes('date-dependent'); 
->>>>>>> Stashed changes
         
         try {
             const tags = tableName ? this.getTags(tableName) : [];
@@ -228,11 +131,7 @@ const sessionCache = {
                     key, 
                     value,
                     tags,
-<<<<<<< Updated upstream
                     persist
-=======
-                    persist // Control file cache writing
->>>>>>> Stashed changes
                 })
             });
             
@@ -250,7 +149,6 @@ const sessionCache = {
         }
     },
     
-<<<<<<< Updated upstream
     async get(key, tableName = null) {
         const startTime = performance.now();
         
@@ -281,14 +179,6 @@ const sessionCache = {
     async clearByTag(tag) {
         const startTime = performance.now();
         
-=======
-    /**
-     * Clears all caches associated with a specific tag (new optimization).
-     * @param {string} tag - Tag to clear (e.g., 'date-dependent').
-     * @returns {Promise<boolean>} Success status.
-     */
-    async clearByTag(tag) {
->>>>>>> Stashed changes
         try {
             const response = await fetch(CACHE_ENDPOINT, {
                 method: "DELETE",
@@ -305,11 +195,7 @@ const sessionCache = {
             
             return result.success;
         } catch (error) {
-<<<<<<< Updated upstream
-            console.error(" Cache clear by tag error:", error);
-=======
             console.error("Cache clear by tag error:", error);
->>>>>>> Stashed changes
             return false;
         }
     },
@@ -324,9 +210,9 @@ const sessionCache = {
             const result = await response.json();
             
             if (key) {
-                console.log(`🗑️  Cleared cache key: ${key}`);
+                console.log(` Cleared cache key: ${key}`);
             } else {
-                console.log(`🗑️  Cleared ALL cache`);
+                console.log(` Cleared ALL cache`);
             }
             
             return result.success;
@@ -352,9 +238,6 @@ const sessionCache = {
     }
 };
 
-<<<<<<< Updated upstream
-//!SECTION
-=======
 /**
  * Clears all caches that depend on the date range (new optimization).
  */
@@ -364,14 +247,11 @@ function clearDateDependentCache() {
 }
 
 // !SECTION
->>>>>>> Stashed changes
 
 // ============================================================================
 // SECTION: Date Helper Functions
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Format a Date object to ISO date string (YYYY-MM-DD)
  * * @param {Date} date - Date object to format
@@ -379,14 +259,12 @@ function clearDateDependentCache() {
  * * @example
  * formatDate(new Date('2024-12-25')) // Returns '2024-12-25'
  */
->>>>>>> Stashed changes
 const formatDate = (date) => {
     return date.getFullYear() + '-' +
         String(date.getMonth() + 1).padStart(2, '0') + '-' +
         String(date.getDate()).padStart(2, '0');
 }
 
-<<<<<<< Updated upstream
 function parseLocalDate(dateString) {
     // Split the string and create a new Date object.
     const parts = dateString.split('-');
@@ -394,14 +272,6 @@ function parseLocalDate(dateString) {
     return new Date(parts[0], parts[1] - 1, parts[2]);
 }
 
-=======
-/**
- * Get the most recent Sunday (start of week)
- * * @returns {Date} Date object representing last Sunday
- * * @example
- * getLastSunday() // Returns Date for most recent Sunday
- */
->>>>>>> Stashed changes
 const getLastSunday = () => {
     const today = new Date();
     const lastSunday = new Date(today);
@@ -409,8 +279,6 @@ const getLastSunday = () => {
     return lastSunday;
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Generate an array of all dates between start and end (inclusive)
  * * @param {string} startDate - Start date in YYYY-MM-DD format
@@ -420,7 +288,6 @@ const getLastSunday = () => {
  * getDatesInRange('2024-01-01', '2024-01-03')
  * // Returns ['2024-01-01', '2024-01-02', '2024-01-03']
  */
->>>>>>> Stashed changes
 const getDatesInRange = (startDate, endDate) => {
     const dates = [];
     const current = parseLocalDate(startDate);
@@ -433,8 +300,6 @@ const getDatesInRange = (startDate, endDate) => {
     return dates;
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Add a specified number of days to a date string
  * * @param {string} dateString - Date in YYYY-MM-DD format
@@ -443,35 +308,28 @@ const getDatesInRange = (startDate, endDate) => {
  * * @example
  * addDaysToDate('2024-01-01', 7) // Returns '2024-01-08'
  */
->>>>>>> Stashed changes
 const addDaysToDate = (dateString, days) => {
     const date = parseLocalDate(dateString);
     date.setDate(date.getDate() + days);
     return formatDate(date);
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Get the day of week name for a given date
  * * @param {string} dateString - Date in YYYY-MM-DD format
  * @returns {string} Day name (e.g., 'Sunday', 'Monday')
  */
->>>>>>> Stashed changes
 const getDayOfWeek = (dateString) => {
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const date = parseLocalDate(dateString);
     return daysOfWeek[date.getDay()];
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Get the week number and year for a given date
  * * @param {string} dateString - Date in YYYY-MM-DD format
  * @returns {string} Week identifier (e.g., 'Week 1', 'Week 2')
  */
->>>>>>> Stashed changes
 const getWeekOfMonth = (dateString) => {
     const date = parseLocalDate(dateString);
     const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -481,14 +339,11 @@ const getWeekOfMonth = (dateString) => {
     return `Week ${weekNumber}`;
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Get the month name for a given date
  * * @param {string} dateString - Date in YYYY-MM-DD format
  * @returns {string} Month name (e.g., 'January', 'February')
  */
->>>>>>> Stashed changes
 const getMonthName = (dateString) => {
     const months = ['January', 'February', 'March', 'April', 'May', 'June',
                    'July', 'August', 'September', 'October', 'November', 'December'];
@@ -502,12 +357,6 @@ const getMonthName = (dateString) => {
 // SECTION: Optimized Data Fetching with Smart Caching
 // ============================================================================
 
-<<<<<<< Updated upstream
-async function fetchData(tableName, columns, filters = {}, or_statement = {}) {
-    const cacheKey = JSON.stringify({ tableName, columns, filters });
-    
-    const cached = await sessionCache.get(cacheKey, tableName);
-=======
 /**
  * Fetch data from API with automatic caching and date filtering
  * * This function handles all API communication, including:
@@ -538,26 +387,19 @@ async function fetchData(tableName, columns, filters = {}) {
     
     // Check cache first, passing maxAge (new optimization)
     const cached = await sessionCache.get(cacheKey, maxAge);
->>>>>>> Stashed changes
     if (cached) {
         return cached;
     }
     
-<<<<<<< Updated upstream
     const apiStartTime = performance.now();
     console.log(` API CALL: ${tableName} with filters:`, filters);
-=======
     console.log(`Fetching fresh data from table: ${tableName} (TTL: ${maxAge/1000}s) with filters:`, filters);
->>>>>>> Stashed changes
     
     const enhancedFilters = { ...filters };
-<<<<<<< Updated upstream
     if (currentStartDate && currentEndDate) {
-=======
     if (currentStartDate && currentEndDate && isDateDependent) {
         // Map table names to their date columns
         // REVIEW: If adding new service types, add their table names and date column mappings here
->>>>>>> Stashed changes
         const dateColumnMap = {
             'Daily_Email_Cost_Record': 'created_date',
             'Daily_Chat_Record_Cost_Record': 'created_date',
@@ -596,10 +438,7 @@ async function fetchData(tableName, columns, filters = {}) {
     let result;
     try {
         result = JSON.parse(text);
-<<<<<<< Updated upstream
-=======
         console.log(`Data fetched from table: ${tableName}`);
->>>>>>> Stashed changes
     } catch (e) {
         console.error(`Error parsing JSON from table: ${tableName}. Raw text: ${text}`, e);
         return []; 
@@ -612,22 +451,18 @@ async function fetchData(tableName, columns, filters = {}) {
         finalData = result.rows || result.data || result.result || [];
     }
     
-<<<<<<< Updated upstream
     const apiDuration = performance.now() - apiStartTime;
     performanceMetrics.apiCalls++;
     performanceMetrics.totalLoadTime += apiDuration;
     console.log(` API Response: ${tableName} (${apiDuration.toFixed(2)}ms, ${finalData.length} records)`);
     
     await sessionCache.set(cacheKey, finalData, tableName);
-=======
     // Cache the result, passing tags (new optimization)
     await sessionCache.set(cacheKey, finalData, tags);
->>>>>>> Stashed changes
     
     return finalData;
-}
+}}
 
-<<<<<<< Updated upstream
 /**
  *  NEW: Bulk load all revenue data for all users in ONE call per table
  */
@@ -695,26 +530,12 @@ async function preloadCriticalData() {
 }
 
 //!SECTION
-=======
 // !SECTION
->>>>>>> Stashed changes
 
 // ============================================================================
 // SECTION: Package Statistics Functions ( OPTIMIZED FOR BULK)
 // ============================================================================
 
-<<<<<<< Updated upstream
-async function getPackageStatsForUser(userId, allPackages = null) {
-    let packages;
-    if (allPackages) {
-        //  Filter from bulk data (no API call!)
-        packages = allPackages.filter(pkg => pkg.user_id === userId);
-    } else {
-        // Fallback to individual API call
-        packages = await fetchData("manual_charges", ["user_id", "cost", "name", "frequency", "created_time"], { user_id: userId });
-    }
-    
-=======
 /**
  * Calculate package statistics for a specific user
  * * Retrieves all manual charges (packages) for a user and calculates:
@@ -736,7 +557,6 @@ async function getPackageStatsForUser(userId, allPackages = null) {
 async function getPackageStatsForUser(userId) {
     // Note: manual_charges is treated as static data for a user, fetching without date filters
     const packages = await fetchData("manual_charges", ["user_id", "cost", "name", "frequency", "created_time"], { user_id: userId });
->>>>>>> Stashed changes
     const packageCount = packages.length;
     
     const weeklyPackageRevenue = packages.reduce((sum, pkg) => {
@@ -748,26 +568,6 @@ async function getPackageStatsForUser(userId) {
     return { packageCount, weeklyPackageRevenue, packageNames, packages };
 }
 
-<<<<<<< Updated upstream
-async function getRevenueByDateForUser(userId, dates, bulkData = null) {
-    let packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts;
-    
-    if (bulkData) {
-        //  Filter from bulk data (no API calls!)
-        packages = bulkData.allPackages.filter(pkg => pkg.user_id === userId);
-        dailyEmailCosts = bulkData.allDailyEmailCosts.filter(rec => rec.user_id === userId);
-        dailyChatCosts = bulkData.allDailyChatCosts.filter(rec => rec.user_id === userId);
-        dailyCallsCosts = bulkData.allDailyCallsCosts.filter(rec => rec.user_id === userId);
-    } else {
-        // Fallback to individual API calls
-        [packages, dailyEmailCosts, dailyChatCosts, dailyCallsCosts] = await Promise.all([
-            fetchData("manual_charges", ["user_id", "frequency", "cost", "name", "created_time"], { user_id: userId }),
-            fetchData("Daily_Email_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Emails", "created_date"], { user_id: userId }),
-            fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
-            fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
-        ]);
-    }
-=======
 /**
  * Get detailed revenue breakdown by date for a specific user
  * * This function aggregates revenue across all service categories:
@@ -800,7 +600,6 @@ async function getRevenueByDateForUser(userId, dates) {
         fetchData("Daily_Chat_Record_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Total_Chats", "created_date"], { user_id: userId }),
         fetchData("Daily_Calls_Cost_Record", ["user_id", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Week_Cost", "Number_Of_Calls", "created_date"], { user_id: userId })
     ]);
->>>>>>> Stashed changes
 
     const revenueByDate = {};
     dates.forEach(date => {
@@ -882,10 +681,6 @@ async function getRevenueByDateForUser(userId, dates) {
     return revenueByDate;
 }
 
-<<<<<<< Updated upstream
-async function getTotalRevenueForUser(userId, dates, bulkData = null) {
-    const revenueByDate = await getRevenueByDateForUser(userId, dates, bulkData);
-=======
 /**
  * Calculate total revenue for a user across a date range
  * * Sums all revenue categories for all dates in the specified range.
@@ -900,7 +695,6 @@ async function getTotalRevenueForUser(userId, dates, bulkData = null) {
  */
 async function getTotalRevenueForUser(userId, dates) {
     const revenueByDate = await getRevenueByDateForUser(userId, dates);
->>>>>>> Stashed changes
     let total = 0;
     dates.forEach(date => {
         const dayRevenue = revenueByDate[date];
@@ -915,8 +709,6 @@ async function getTotalRevenueForUser(userId, dates) {
 // SECTION: Chart Color Configuration
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Get CSS custom property value from the root element
  * This allows charts to use the same color scheme as the rest of the application
@@ -924,20 +716,16 @@ async function getTotalRevenueForUser(userId, dates) {
  * * @param {string} propertyName - CSS custom property name (e.g., '--primary')
  * @returns {string} The computed CSS value
  */
->>>>>>> Stashed changes
 function getCSSVariable(propertyName) {
     return getComputedStyle(document.documentElement).getPropertyValue(propertyName).trim();
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Convert hex color to rgba with specified opacity
  * * @param {string} hex - Hex color code (e.g., '#00356f')
  * @param {number} alpha - Opacity value 0-1
  * @returns {string} RGBA color string
  */
->>>>>>> Stashed changes
 function hexToRgba(hex, alpha) {
     hex = hex.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
@@ -946,8 +734,6 @@ function hexToRgba(hex, alpha) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Standardized color scheme for all charts
  * Uses CSS custom properties from styles.css for theme consistency
@@ -955,7 +741,6 @@ function hexToRgba(hex, alpha) {
  * * REVIEW: If adding new service types, add corresponding color definitions here
  * * @constant {Object} chartColors
  */
->>>>>>> Stashed changes
 const chartColors = {
     packages: {
         get background() { return hexToRgba(getCSSVariable('--primary'), 0.2); },
@@ -979,13 +764,10 @@ const chartColors = {
     }
 };
 
-<<<<<<< Updated upstream
-=======
 /**
  * Color palette for sub-categories (days of week, weeks of month, months of year)
  * * @constant {Array<string>}
  */
->>>>>>> Stashed changes
 const subCategoryColors = [
     '#00356f', '#0467d2', '#008387', '#46c2c6', '#f59e0b', '#2563eb', '#3b82f6' //NOTE: if the colors change theen this need to be changed manually
 ];
@@ -996,13 +778,10 @@ const subCategoryColors = [
 // SECTION: Chart Management
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Hide all charts except the specified one
  * * @param {string} chartToShow - Which chart to display ('main', 'bubble', 'user', or 'none')
  */
->>>>>>> Stashed changes
 function hideOtherCharts(chartToShow) {
     const mainChart = document.getElementById('main-client-chart');
     const bubbleChart = document.getElementById('bubble-chart-container');
@@ -1058,8 +837,6 @@ function deployBackbutton() {
 // SECTION: Bubble Chart for Revenue Breakdown
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Display bubble chart showing revenue breakdown by user, date, and type
  * * Creates a bubble chart where:
@@ -1080,7 +857,6 @@ function deployBackbutton() {
  * [{ id: 1, first_name: 'John', last_name: 'Doe' }]
  * );
  */
->>>>>>> Stashed changes
 async function showBubbleChart(period, users) {
     hideOtherCharts('bubble');
     
@@ -1266,8 +1042,6 @@ async function showBubbleChart(period, users) {
 // SECTION: Data Aggregation by Period
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Aggregate daily revenue data into weekly, monthly, or yearly periods
  * * Takes daily revenue data and aggregates it based on the selected date type:
@@ -1297,7 +1071,6 @@ async function showBubbleChart(period, users) {
  * const weeklyData = aggregateDataByPeriod(dailyData, '7');
  * // Returns data grouped by week with Sunday as start date
  */
->>>>>>> Stashed changes
 function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
     const type = parseInt(dateType);
     
@@ -1408,8 +1181,6 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
 // SECTION: Main Revenue Chart (Stacked Bar Chart)
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Render the main aggregate revenue chart for all clients
  * * Creates a stacked bar chart showing revenue over time with:
@@ -1429,7 +1200,6 @@ function aggregateDataByPeriod(aggregatedDatabyDay, dateType) {
  * * @example
  * await renderMainClientChart(usersArray, datesArray, '7'); // Weekly view
  */
->>>>>>> Stashed changes
 async function renderMainClientChart(users, dates, dateType) {
     console.log(' Rendering main chart...')
     const ctx = document.getElementById('main-revenue-chart').getContext('2d');
@@ -1820,8 +1590,6 @@ function updateModalContent() {
     }
 }
 
-<<<<<<< Updated upstream
-=======
 /**
  * Show detailed service records in a modal when stat card is clicked
  * * Fetches and displays all records for a specific service type within
@@ -1834,7 +1602,6 @@ function updateModalContent() {
  * @param {string[]} dates - Array of dates in range
  * @returns {Promise<void>}
  */
->>>>>>> Stashed changes
 async function showServiceDetail(serviceType, userId, dates) {
     const modal = document.getElementById('service-detail-modal');
     const modalTitle = document.getElementById('service-modal-title');
@@ -1918,10 +1685,6 @@ function closeServiceModal() {
 // SECTION: User Table Loading ( OPTIMIZED WITH BULK DATA)
 // ============================================================================
 
-<<<<<<< Updated upstream
-async function loadUsers() {
-    console.log(" Loading users with BULK data...");
-=======
 /**
  * Load and display the users table with revenue data
  * * This function:
@@ -1940,7 +1703,6 @@ async function loadUsers() {
  */
 async function loadUsers(preloadedUsers = null) {
     console.log("Loading users...");
->>>>>>> Stashed changes
     const tbody = document.getElementById('users-tbody');
     
     try {
@@ -1950,13 +1712,8 @@ async function loadUsers(preloadedUsers = null) {
         currentStartDate = clientStartDate;
         currentEndDate = clientEndDate;
         
-<<<<<<< Updated upstream
-        //  Step 1: Load users
-        var users = await fetchData("users", 
-=======
         // Fetch all non-admin users (using preloaded data if available)
         const users = preloadedUsers || await fetchData("users", 
->>>>>>> Stashed changes
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
@@ -2014,12 +1771,8 @@ async function loadUsers(preloadedUsers = null) {
                 <td>${revenueText}</td>
                 <td>${packageText}</td>
             `;
-<<<<<<< Updated upstream
-            
-=======
         }
             // Add click handler for detailed view
->>>>>>> Stashed changes
             tr.addEventListener('click', () => showUserDetail(user));
             tbody.appendChild(tr);
         });
@@ -2042,8 +1795,6 @@ async function loadUsers(preloadedUsers = null) {
 // SECTION: User Detail View
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Display detailed revenue breakdown for a specific user
  * * Shows:
@@ -2062,7 +1813,6 @@ async function loadUsers(preloadedUsers = null) {
  * * @example
  * await showUserDetail({ id: 123, first_name: 'John', last_name: 'Doe', packages: [...] });
  */
->>>>>>> Stashed changes
 async function showUserDetail(user) {
     console.log("Showing details for user:", user);
     currentUser = user;
@@ -2306,9 +2056,6 @@ async function showUserDetail(user) {
 // ============================================================================
 // SECTION: Navigation
 // ============================================================================
-<<<<<<< Updated upstream
-
-=======
 /**
  * open categories from links on the sidebar
  * * - checks if name is in array
@@ -2318,7 +2065,6 @@ async function showUserDetail(user) {
  * * @param {any} name -id of the tab to open
  * * @return none
  */
->>>>>>> Stashed changes
 function openSidebar(name) {
     name=String(name);
     console.log(` Opening tab: ${name}`)
@@ -2351,12 +2097,9 @@ function openSidebar(name) {
         }
     });
 }
-<<<<<<< Updated upstream
 
 //!SECTION
-=======
-// !SECTION
->>>>>>> Stashed changes
+
 
 /**
  * ============================================================================
@@ -2530,8 +2273,6 @@ async function exportToExcel() {
 // SECTION: Initialization ( BULK OPTIMIZED)
 // ============================================================================
 
-<<<<<<< Updated upstream
-=======
 /**
  * Initialize the application when DOM is ready
  * * Sets up:
@@ -2541,7 +2282,6 @@ async function exportToExcel() {
  * - Initial data load
  * * @listens DOMContentLoaded
  */
->>>>>>> Stashed changes
 document.addEventListener('DOMContentLoaded', () => {
     console.log(' Initializing dashboard with BULK loading...');
     
@@ -2574,10 +2314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clientEndDateInput.value = clientEndDate;
     clientDateTypeInput.value = '1';
     
-<<<<<<< Updated upstream
-=======
     // Revenue tab date change event handlers (new optimization)
->>>>>>> Stashed changes
     startDateInput.addEventListener('change', (e) => {
         currentStartDate = e.target.value;
         localStorage.setItem('start',JSON.stringify(currentStartDate));
@@ -2606,14 +2343,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDateType = e.target.value;
     });
     
-<<<<<<< Updated upstream
-=======
     // Client tab date change event handlers (new optimization)
     clientStartDateInput.addEventListener('change', (e) => {
         clientStartDate = e.target.value;
         clearDateDependentCache(); 
     });
->>>>>>> Stashed changes
     
 
     
@@ -2683,24 +2417,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(' Cache stats:', sessionCache.getStats());
     });
 
-<<<<<<< Updated upstream
-    loadUsers();
-    openSidebar("revenue-content");
-
-    //  Initialize with bulk data
-    (async () => {
-        var users = await fetchData("users", 
-            ["id", "first_name", "last_name", "email"],
-            { role: "user" }
-        );
-        users = users.reduce((acc, user) => {
-            if (!user.email.includes('ianf+test')) {
-                acc.push(user);
-            }
-            return acc;
-        }, []);
-        
-=======
     // Pre-load critical data and initialize dashboards (new optimization)
     (async () => {
         // 1. Pre-load user data (uses 1-hour TTL)
@@ -2715,7 +2431,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUsers(users);
 
         // 3. Initialize Revenue Tab Chart with preloaded data
->>>>>>> Stashed changes
         if (users.length > 0) {
             await loadBulkRevenueData();
             
