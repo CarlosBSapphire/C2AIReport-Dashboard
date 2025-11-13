@@ -28,6 +28,21 @@
 const API_ENDPOINT = "https://n8n.workflows.organizedchaos.cc/webhook/da176ae9-496c-4f08-baf5-6a78a6a42adb";
 const CACHE_ENDPOINT = "/cache.php";
 
+const CACHE_TTLS = {
+    'users': 3600000,                    // 1 hour - users rarely change
+    'manual_charges': 1800000,           // 30 minutes - packages change occasionally
+    'Daily_Email_Cost_Record': 300000,   // 5 minutes - aggregated data
+    'Daily_Chat_Record_Cost_Record': 300000,
+    'Daily_Calls_Cost_Record': 300000,
+    'AI_Email_Records': 180000,          // 3 minutes - raw records
+    'AI_Chat_Data': 180000,
+    'Call_Data': 180000,
+    'default': 300000                    // 5 minutes default
+};
+
+const LOADING_HTML = '<div class="loading"><div class="spinner"></div><p>Loading data...</p></div>';
+const ERROR_HTML = (message) => `<div class="loading"><p class="error">${message}</p></div>`;
+
 // Chart instances
 let chartInstance = null;
 let mainChartInstance = null;
@@ -371,8 +386,7 @@ const getMonthName = (dateString) => {
  * @param {Object} [filters={}] - Additional filters to apply
  * @returns {Promise<Array>} Array of data rows from the table
  * * @throws {Error} If API request fails or returns invalid data
- * * @example
- * const users = await fetchData("users", ["id", "first_name", "last_name"], { role: "user" });
+
  */
 async function fetchData(tableName, columns, filters = {}) {
     // Determine tags and maxAge based on the table name (new optimization)
@@ -420,7 +434,7 @@ async function fetchData(tableName, columns, filters = {}) {
     const response = await fetch(API_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table_name: tableName, columns, filters: enhancedFilters, $or: or_statement})
+        body: JSON.stringify({ table_name: tableName, columns, filters: enhancedFilters, $or: []})
     });
 
     if (!response.ok) {
@@ -1244,7 +1258,7 @@ async function renderMainClientChart(users, dates, dateType) {
     const totalChats = aggregatedData.reduce((sum, period) => sum + period.chats, 0);
     const totalCalls = aggregatedData.reduce((sum, period) => sum + period.calls, 0);
 
-    // --- NEW: Find the Top Spender ---
+    // Find the Top Spender ---
     // The 'users' array passed into this function already has the 'totalRevenue' for each user
     let topSpender = { first_name: 'N/A', last_name: '', totalRevenue: 0 };
     if (users && users.length > 0) {
@@ -1253,7 +1267,7 @@ async function renderMainClientChart(users, dates, dateType) {
     }
 
     // --- Update all the HTML elements by their new unique IDs ---
-    document.getElementById('stat-top-spender').textContent = `${topSpender.first_name} ${topSpender.last_name} ($${topSpender.totalRevenue.toFixed(2)})`;
+    document.getElementById('stat-top-spender').textContent = `${topSpender.first_name} ${topSpender.last_name} $${topSpender.totalRevenue.toFixed(2)}`;
     document.getElementById('stat-revenue-total').textContent = `$${grandTotal.toFixed(2)}`;
     document.getElementById('stat-revenue-packages').textContent = `$${totalPackages.toFixed(2)}`;
     document.getElementById('stat-revenue-emails').textContent = `$${totalEmails.toFixed(2)}`;
@@ -1713,9 +1727,9 @@ async function loadUsers(preloadedUsers = null) {
         currentEndDate = clientEndDate;
         
         // Fetch all non-admin users (using preloaded data if available)
-        const users = preloadedUsers || await fetchData("users", 
+        let users = preloadedUsers || await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
-            { role: "user" }
+            { role: "user" }, 
         );
         console.log("Users loaded:", users.length);
 
@@ -1725,6 +1739,7 @@ async function loadUsers(preloadedUsers = null) {
             currentEndDate = tempEnd;
             return;
         }
+        //remove Ian test
         users = users.reduce((acc, user) => {
             if (!user.email.includes('ianf+test')) {
                 acc.push(user);
@@ -1826,6 +1841,11 @@ async function showUserDetail(user) {
     document.querySelectorAll('.stat-value').forEach(el => el.textContent = '$0.00');
     
     document.getElementById('user-detail-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const userChartContainer = document.querySelector('#user-detail-view .chart-container');
+    userChartContainer.innerHTML = LOADING_HTML;
+
+    document.querySelectorAll('#user-detail-view .stat-value').forEach(el => el.textContent = '...');
     
     try {
         const tempStart = currentStartDate;
@@ -2350,38 +2370,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
 
-    
-    //  Revenue tab load button with bulk data
+
+   //  Revenue tab load button with bulk data
     loadButton.addEventListener('click', async () => {
-        await sessionCache.clearByTag('date-dependent');
-        bulkDataCache = { allPackages: null, allDailyEmailCosts: null, allDailyChatCosts: null, allDailyCallsCosts: null, lastFetchTime: null };
-        
-        var users = await fetchData("users", 
-            ["id", "first_name", "last_name", "email"],
-            { role: "user" }
-        );
-        users = users.reduce((acc, user) => {
-            if (!user.email.includes('ianf+test')) {
-                acc.push(user);
+        // --- ADDED: Get the containers ---
+        const mainChartContainer = document.getElementById('main-client-chart');
+        const statsGrid = document.getElementById('stats-grid');
+
+        try {
+            // --- ADDED: Show spinner in chart container ---
+            mainChartContainer.innerHTML = LOADING_HTML;
+            // --- ADDED: Set stats to a loading state ---
+            statsGrid.querySelectorAll('.stat-value').forEach(el => el.textContent = '...');
+
+            await sessionCache.clearByTag('date-dependent');
+            bulkDataCache = { /*...*/ };
+            
+            var users = await fetchData("users", 
+                ["id", "first_name", "last_name", "email"],
+                { role: "user" }
+            );
+            users = users.reduce(/*...*/);
+            
+            if (users.length > 0) {
+                await loadBulkRevenueData();
+                
+                const dates = getDatesInRange(currentStartDate, currentEndDate);
+                allDatesInRange = dates;
+                
+                const statsPromises = users.map(/*...*/);
+                const usersWithStats = await Promise.all(statsPromises);
+                allUsersData = usersWithStats;
+                
+                // This function will automatically replace the spinner
+                await renderMainClientChart(usersWithStats, dates, currentDateType);
+            } else {
+                // --- ADDED: Show "no data" if no users ---
+                mainChartContainer.innerHTML = ERROR_HTML("No user data found for this period.");
+                statsGrid.querySelectorAll('.stat-value').forEach(el => el.textContent = 'N/A');
             }
-            return acc;
-        }, []);
-        
-        if (users.length > 0) {
-            await loadBulkRevenueData();
-            
-            const dates = getDatesInRange(currentStartDate, currentEndDate);
-            allDatesInRange = dates;
-            
-            const statsPromises = users.map(async user => {
-                const packageStats = await getPackageStatsForUser(user.id, bulkDataCache.allPackages);
-                const totalRevenue = await getTotalRevenueForUser(user.id, dates, bulkDataCache);
-                return { ...user, ...packageStats, totalRevenue };
-            });
-            const usersWithStats = await Promise.all(statsPromises);
-            allUsersData = usersWithStats;
-            
-            await renderMainClientChart(usersWithStats, dates, currentDateType);
+        } catch (error) {
+            // --- ADDED: Show error in the container ---
+            console.error("Error on filter:", error);
+            mainChartContainer.innerHTML = ERROR_HTML(`Error loading chart: ${error.message}`);
         }
     });
     
@@ -2421,7 +2452,7 @@ document.addEventListener('DOMContentLoaded', () => {
     (async () => {
         // 1. Pre-load user data (uses 1-hour TTL)
         console.log('Pre-loading user data...');
-        const users = await fetchData("users", 
+        let users = preloadedUsers || await fetchData("users", 
             ["id", "first_name", "last_name", "email"],
             { role: "user" }
         );
