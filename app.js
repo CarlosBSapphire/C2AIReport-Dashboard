@@ -1275,74 +1275,38 @@ async function renderMainClientChart(users, dates, dateType) {
     document.getElementById('stat-revenue-calls').textContent = `$${totalCalls.toFixed(2)}`;
     
 
-    const chartLabels = aggregatedData.map(d => d.label);
-    
-
-    
+    const chartLabels = aggregatedData.map(d => d.label);    
     const datasets = [];
-    const type = parseInt(dateType);
     
-    if (type === 1) {
-        datasets.push({
-            label: 'Packages',
-            data: aggregatedData.map(d => d.packages),
-            backgroundColor: chartColors.packages.border,
-            stack: 'revenue',
-            hidden: true
-        });
-        datasets.push({
-            label: 'Emails',
-            data: aggregatedData.map(d => d.emails),
-            backgroundColor: chartColors.emails.border,
-            stack: 'revenue'
-        });
-        datasets.push({
-            label: 'Chats',
-            data: aggregatedData.map(d => d.chats),
-            backgroundColor: chartColors.chats.border,
-            stack: 'revenue'
-        });
-        datasets.push({
-            label: 'Calls',
-            data: aggregatedData.map(d => d.calls),
-            backgroundColor: chartColors.calls.border,
-            stack: 'revenue'
-        });
-    } else {
-        const subCategoryNames = new Set();
-        aggregatedData.forEach(period => {
-            Object.keys(period.subCategories).forEach(cat => subCategoryNames.add(cat));
-        });
-        
-        const sortedSubCategories = Array.from(subCategoryNames).sort((a, b) => {
-            if (type === 7) {
-                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                return days.indexOf(a) - days.indexOf(b);
-            } else if (type === 30) {
-                const weekNum = (w) => parseInt(w.replace('Week ', ''));
-                return weekNum(a) - weekNum(b);
-            } else if (type === 365) {
-                const months = ['January', 'February', 'March', 'April', 'May', 'June',
-                              'July', 'August', 'September', 'October', 'November', 'December'];
-                return months.indexOf(a) - months.indexOf(b);
-            }
-            return 0;
-        });
-        
-        sortedSubCategories.forEach((subCat, idx) => {
-            datasets.push({
-                label: subCat,
-                data: aggregatedData.map(d => {
-                    const subCatData = d.subCategories[subCat];
-                    if (!subCatData) return 0;
-                    return parseFloat((subCatData.packages + subCatData.emails + 
-                                     subCatData.chats + subCatData.calls).toFixed(2));
-                }),
-                backgroundColor: subCategoryColors[idx % subCategoryColors.length],
-                stack: 'revenue'
-            });
-        });
-    }
+    datasets.push({
+        label: 'Packages',
+        data: aggregatedData.map(d => d.packages),
+        backgroundColor: chartColors.packages.border,
+        stack: 'revenue',
+        hidden: true
+    });
+    
+    datasets.push({
+        label: 'Emails',
+        data: aggregatedData.map(d => d.emails),
+        backgroundColor: chartColors.emails.border,
+        stack: 'revenue'
+    });
+    
+    datasets.push({
+        label: 'Chats',
+        data: aggregatedData.map(d => d.chats),
+        backgroundColor: chartColors.chats.border,
+        stack: 'revenue'
+    });
+    
+    datasets.push({
+        label: 'Calls',
+        data: aggregatedData.map(d => d.calls),
+        backgroundColor: chartColors.calls.border,
+        stack: 'revenue'
+    });
+
     
     datasets.push({
         label: 'Trend',
